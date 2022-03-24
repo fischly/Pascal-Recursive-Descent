@@ -134,23 +134,24 @@ public:
 
             match(TokenType::OF);
 
-            if (nextToken == TokenType::INTEGER || nextToken == TokenType::REAL || nextToken == TokenType::BOOLEAN) {
-                temp = new Variable::VariableTypeArray(match(), startRange, stopRange);
-            } else {
-                throw "Expected standard type (integer, real or boolean) after array declaration"; // TODO: better error message
-            }
+            temp = new Variable::VariableTypeArray(standard_type(), startRange, stopRange);
         } else {
             // standard type
-            if (nextToken == TokenType::INTEGER || nextToken == TokenType::REAL || nextToken == TokenType::BOOLEAN) {
-                temp = new Variable::VariableTypeSimple(match());
-            } else {
-                throw "Expected standard type (integer, real or boolean) after array declaration"; // TODO: better error message
-            }
+            temp = new Variable::VariableTypeSimple(standard_type());
         }
 
         return temp;
     }
 
+    Token standard_type() {
+        if (nextToken == TokenType::INTEGER || nextToken == TokenType::REAL || nextToken == TokenType::BOOLEAN) {
+            return match();
+        } else {
+            std::stringstream ss;
+            ss << "Expected standard type (integer, real or boolean), but got " << TOKEN_NAMES[nextToken] << " at line " << yylineno;
+            throw SyntaxException(ss.str().c_str());
+        }
+    }
 
     /* --------------- Methods --------------------- */
     Method* method() {
@@ -177,12 +178,8 @@ public:
                 // method with return value
                 match(TokenType::COLON);
 
-                if (nextToken == TokenType::INTEGER || nextToken == TokenType::REAL || nextToken == TokenType::BOOLEAN) { // TODO: also allow arrays
-                    Token rt = match();
-                    returnType = new Token(rt.type, rt.lexeme, rt.lineNumber);
-                } else {
-                    throw "Expected standard type (integer, real or boolean) as function return type"; // TODO: better error message
-                }
+                Token rt = standard_type();
+                returnType = new Token(rt.type, rt.lexeme, rt.lineNumber);
             }
             match(TokenType::SEMICOLON);
 

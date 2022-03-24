@@ -149,19 +149,19 @@ std::string renderMethod(Method* method) {
     }
     
     
-    // << " (defs";
+    ss << " (defs";
 
-    // for (const auto& varDecl : method->declarations) {
-    //     ss << " (" << varDecl->name.lexeme << ": ";
+    for (const auto& varDecl : method->declarations) {
+        ss << " (" << varDecl->name.lexeme << ": ";
 
-    //     if (Variable::VariableTypeSimple* simpleVar = dynamic_cast<Variable::VariableTypeSimple*>(varDecl->type)) {
-    //         ss << simpleVar->typeName.lexeme;
-    //     } else if (Variable::VariableTypeArray* arrayVar = dynamic_cast<Variable::VariableTypeArray*>(varDecl->type)) {
-    //         ss << arrayVar->typeName.lexeme << "[" << arrayVar->startRange.lexeme << ".." << arrayVar->stopRange.lexeme << "]";
-    //     }
+        if (Variable::VariableTypeSimple* simpleVar = dynamic_cast<Variable::VariableTypeSimple*>(varDecl->type)) {
+            ss << simpleVar->typeName.lexeme;
+        } else if (Variable::VariableTypeArray* arrayVar = dynamic_cast<Variable::VariableTypeArray*>(varDecl->type)) {
+            ss << arrayVar->typeName.lexeme << "[" << arrayVar->startRange.lexeme << ".." << arrayVar->stopRange.lexeme << "]";
+        }
 
-    //     ss << ")";
-    // }
+        ss << ")";
+    }
 
     ss << ")\n";
 
