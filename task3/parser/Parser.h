@@ -48,25 +48,46 @@ public:
 
 
     Expression* expression() {
-        Expression* temp = term(); // left expression
+        Expression* temp = simple_expression(); // left expression
 
-        while (nextToken == TokenType::OP_ADD || nextToken == TokenType::OP_SUB) { // TODO: change to all strich operators
+        if (nextToken == TokenType::OP_EQUALS || nextToken == TokenType::OP_NOT_EQUALS || nextToken == TokenType::OP_LESS ||
+            nextToken == TokenType::OP_LESS_EQUAL || nextToken == TokenType::OP_GREATER || nextToken == TokenType::OP_GREATER_EQUAL) {
+
             Token operatorToken = match();
 
-            temp = new Expr::Binary(temp, operatorToken, term());
+            temp = new Expr::Binary(temp, operatorToken, simple_expression());
         }
 
         return temp;
     }
 
-    void simple_expression() {
+    Expression* simple_expression() {
+        Expression* temp;
 
+        // optional (minus) sign
+        if (nextToken == TokenType::OP_SUB) { // sign/unary minus
+            Token opToken = match(TokenType::OP_SUB);
+            temp = new Expr::Unary(opToken, term());
+        }
+
+        // main term
+        temp = term();
+
+        // add operations
+        while (nextToken == TokenType::OP_ADD || nextToken == TokenType::OP_SUB || nextToken == TokenType::OP_OR) { // TODO: change to all strich operators
+            Token opToken = match();
+            temp = new Expr::Binary(temp, opToken, term());
+        }
+
+        return temp;
     }
 
     Expression* term() {
+        // main factor
         Expression* temp = factor();
 
-        while (nextToken == TokenType::OP_MUL) { // TODO: change to all punkt operators
+        // mult operations
+        while (nextToken == TokenType::OP_MUL || nextToken == TokenType::OP_DIV || nextToken == TokenType::OP_INTEGER_DIV || nextToken == TokenType::OP_AND) {
             Token operatorToken = match();
 
             temp = new Expr::Binary(temp, operatorToken, factor());
@@ -79,12 +100,15 @@ public:
         Expression* temp;
 
         switch (nextToken) {
+            // arbitrary amount of "not"'s
             case TokenType::OP_NOT:
             {
                 Token opToken = match();
 
                 temp = new Expr::Unary(opToken, factor());
             } break;
+
+            // groupings (with brackets)
             case TokenType::BRACKETS_OPEN:
             {
                 std::cout << "[factor] found BRACKETS_OPEN" << std::endl;
@@ -95,6 +119,7 @@ public:
 
             } break;
 
+            // literals
             case TokenType::LITERAL_INTEGER:
             case TokenType::LITERAL_REAL:
             case TokenType::LITERAL_STRING: 
@@ -105,6 +130,7 @@ public:
                 temp = new Expr::Literal{literalToken};
             } break;
 
+            // identifiers and function calls
             case TokenType::IDENTIFIER:
             {
                 Token identifierToken = match();
