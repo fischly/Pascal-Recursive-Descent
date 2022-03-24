@@ -17,6 +17,7 @@ using Expr::Expression;
 class Parser {
 public:
     Parser() {
+        // consume first token at start
         nextToken = static_cast<TokenType>(yylex());
     }
 
@@ -114,7 +115,19 @@ public:
                     match(TokenType::BRACKETS_OPEN);
 
                     std::cout << "[factor] found FUNCTION CALL (" << yytext << ")" << std::endl;
-                    temp = new Expr::Call(identifierToken, std::vector<Expression*>{}); // TODO: parse arguments as expression list
+
+                    // matching argument list (list of expressions)
+                    std::vector<Expression*> argumentList;
+                    if (nextToken != TokenType::BRACKETS_CLOSING) {
+                        argumentList.push_back(expression());
+
+                        while (nextToken == TokenType::COMMA) {
+                            match(TokenType::COMMA); // consume the comma
+                            argumentList.push_back(expression());
+                        }
+                    }
+
+                    temp = new Expr::Call(identifierToken, argumentList); 
 
                     match(TokenType::BRACKETS_CLOSING);
                     

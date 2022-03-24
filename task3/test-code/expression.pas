@@ -1,1 +1,1 @@
-not not 5 * (not pi + 3.1415)
+fib(10, fib(20 * x), lol()) + 32
