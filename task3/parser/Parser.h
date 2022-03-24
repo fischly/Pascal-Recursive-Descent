@@ -14,6 +14,7 @@ extern char* yytext;
 extern FILE *yyin;
 
 using Expr::Expression;
+using Stmt::Statement;
 
 class Parser {
 public:
@@ -40,13 +41,108 @@ public:
     Token match() {
         Token consumedToken(nextToken, yytext, yylineno);
         
-        std::cout << "updated next token from " << TOKEN_NAMES[nextToken] << " (\"" << yytext << "\") to ";
+        // std::cout << "updated next token from " << TOKEN_NAMES[nextToken] << " (\"" << yytext << "\") to ";
         nextToken = static_cast<TokenType>(yylex());
-        std::cout << TOKEN_NAMES[nextToken] << " (\"" << yytext << "\")" << std::endl;
+        // std::cout << TOKEN_NAMES[nextToken] << " (\"" << yytext << "\")" << std::endl;
 
         return consumedToken;
     }
 
+
+    /* =========================================================================================================================== */
+    /* ========= Statements  ===================================================================================================== */
+    /* =========================================================================================================================== */
+
+    Statement* statement() {
+        Statement* temp;
+
+        // block
+        if (nextToken == TokenType::BEGIN_) {
+            match(TokenType::BEGIN_);
+
+            std::vector<Statement*> statementsInBlock;
+            while (nextToken != TokenType::END_) {
+                statementsInBlock.push_back(statement());
+            }
+
+            temp = new Stmt::Block(statementsInBlock);
+
+            match(TokenType::END_);
+        }
+        // while
+        else if (nextToken == TokenType::WHILE) {
+            match(TokenType::WHILE);
+
+            Expression* condition = expression();
+            match(TokenType::DO);
+            Statement* body = statement();
+
+            temp = new Stmt::While(condition, body);
+        }
+        // if
+        else if (nextToken == TokenType::IF) {
+            match(TokenType::IF);
+
+            Expression* condition = expression();
+            match(TokenType::THEN);
+            Statement* thenBody = statement();
+            Statement* elseBody = NULL;
+
+            if (nextToken == TokenType::ELSE) {
+                match(TokenType::ELSE);
+
+                elseBody = statement();
+            }
+
+            temp = new Stmt::If(condition, thenBody, elseBody);
+        }
+
+        else if (nextToken == TokenType::IDENTIFIER) {
+            Token identifierToken = match(TokenType::IDENTIFIER);
+            
+            // method call
+            if (nextToken == TokenType::BRACKETS_OPEN) {
+                match(TokenType::BRACKETS_OPEN);
+
+                std::vector<Expression*> argumentList;
+                if (nextToken != TokenType::BRACKETS_CLOSING) {
+                    argumentList.push_back(expression());
+
+                    while (nextToken == TokenType::COMMA) {
+                        match(TokenType::COMMA);
+                        argumentList.push_back(expression());
+                    }
+                }
+
+                temp = new Stmt::Call(identifierToken, argumentList); 
+
+                match(TokenType::BRACKETS_CLOSING);
+            }
+            // assignment
+            else {
+                Expression* arrayIndexValue = NULL;
+                if (nextToken == TokenType::SQUARE_OPEN) {
+                    match(TokenType::SQUARE_OPEN);
+                    arrayIndexValue = expression();
+                    match(TokenType::SQUARE_CLOSING);
+                }
+
+                match(TokenType::OP_ASSIGNMENT);
+
+                Expression* assignmentValue = expression();
+
+                temp = new Stmt::Assignment(identifierToken, arrayIndexValue, assignmentValue);
+            }
+        }
+
+        return temp;
+    }
+
+
+
+    /* =========================================================================================================================== */
+    /* ========= Expressions ===================================================================================================== */
+    /* =========================================================================================================================== */
 
     Expression* expression() {
         Expression* temp = simple_expression(); // left expression

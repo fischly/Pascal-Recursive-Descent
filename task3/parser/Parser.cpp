@@ -58,17 +58,65 @@ std::string parenthesize(std::string name, const std::list<Expr::Expression*>& e
 }
 
 
+
+std::string renderStatement(Stmt::Statement* stmt) {
+
+    std::stringstream ss;
+
+    if (Stmt::Assignment* assignStatement = dynamic_cast<Stmt::Assignment*>(stmt)) {
+        ss << "(assign " << assignStatement->identifier.lexeme;
+        if (assignStatement->arrayIndex != NULL) {
+            ss << "[" << renderExpression(assignStatement->arrayIndex) << "]";
+        }
+        ss << " := " << renderExpression(assignStatement->value) << ")";
+    } 
+    else if (Stmt::Call* callStatement = dynamic_cast<Stmt::Call*>(stmt)) {
+        ss << "(call " << callStatement->callee.lexeme;
+
+        for (auto const& exp : callStatement->arguments) {
+            ss << " ";
+            ss << renderExpression(exp);
+        }
+
+        ss << ")";
+    }
+    else if (Stmt::If* ifStatement = dynamic_cast<Stmt::If*>(stmt)) {
+        ss << "(if " << renderExpression(ifStatement->condition) << " (then " << renderStatement(ifStatement->thenBody) << ")";
+        
+        if (ifStatement->elseBody != NULL) {
+            ss << " (else " << renderStatement(ifStatement->elseBody) << ")";
+        }
+        ss << ")";
+    }
+    else if (Stmt::While* whileStatement = dynamic_cast<Stmt::While*>(stmt)) {
+        ss << "(while " << renderExpression(whileStatement->condition) << " (do " << renderStatement(whileStatement->body) << "))";
+    }
+    else if (Stmt::Block* blockStatement = dynamic_cast<Stmt::Block*>(stmt)) {
+        ss << "(";
+
+        for (auto const& stmt : blockStatement->statements) {
+            ss << renderStatement(stmt);
+        }
+        
+        ss << ")";
+    }
+
+    return ss.str();
+}
+
+
 int main(int argc, char **argv) {
     // yyin = fopen("test-code/literalExpression.pas", "r");
 
     std::cout << "Hello world from parser" << std::endl;
 
     Parser p;
-    Expr::Expression* exp = p.expression();
+    // Expr::Expression* exp = p.expression();
+    Stmt::Statement* stmt = p.statement();
 
     std::cout << "\n\n=====================================================\n\n";
 
-    std::cout << renderExpression(exp);
+    std::cout << renderStatement(stmt);
 
     // p.match(TokenType::LITERAL_INTEGER);
    

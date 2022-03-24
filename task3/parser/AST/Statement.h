@@ -15,7 +15,7 @@ namespace Stmt {
         virtual ~Statement() = default; // adding virtual destructor to make Expression class polymorphic
     };
 
-    class Assignment {
+    class Assignment : public Statement {
     public:
         Assignment(Token identifier, Expression* arrayIndex, Expression* value) 
             : identifier{identifier}, arrayIndex{arrayIndex}, value{value}
@@ -26,7 +26,7 @@ namespace Stmt {
         Expression* value;
     };
 
-    class Call {
+    class Call : public Statement {
     public:
         Call(Token callee, std::vector<Expression*> arguments)
             : callee{callee}, arguments{arguments}
@@ -36,7 +36,7 @@ namespace Stmt {
         std::vector<Expression*> arguments;
     };
 
-    class If {
+    class If : public Statement {
     public:
         If(Expression* condition, Statement* thenBody, Statement* elseBody)
             : condition{condition}, thenBody{thenBody}, elseBody{elseBody}
@@ -47,7 +47,7 @@ namespace Stmt {
         Statement* elseBody;
     };
 
-    class While {
+    class While : public Statement {
     public:
         While(Expression* condition, Statement* body)
             : condition{condition}, body{body}
@@ -57,7 +57,7 @@ namespace Stmt {
         Statement* body;
     };
 
-    class Block {
+    class Block : public Statement {
     public:
         Block(std::vector<Statement*> statements)
             : statements{statements}
