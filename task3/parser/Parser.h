@@ -6,6 +6,7 @@
 
 #include "SyntaxException.h"
 #include "AST/Expression.h"
+#include "AST/Statement.h"
 
 extern int yylex();
 extern int yylineno;
