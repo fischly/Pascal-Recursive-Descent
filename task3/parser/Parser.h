@@ -1,12 +1,17 @@
 
 #include <iostream>
+#include <exception>
 
 #include "../common/token-enum.h"
 #include "../lexer/lex.yy.c"
 
 #include "SyntaxException.h"
+
 #include "AST/Expression.h"
 #include "AST/Statement.h"
+#include "AST/Variable.h"
+#include "AST/Method.h"
+#include "AST/Program.h"
 
 extern int yylex();
 extern int yylineno;
@@ -46,6 +51,160 @@ public:
         // std::cout << TOKEN_NAMES[nextToken] << " (\"" << yytext << "\")" << std::endl;
 
         return consumedToken;
+    }
+
+    /* =========================================================================================================================== */
+    /* ========= Program and methods  ============================================================================================ */
+    /* =========================================================================================================================== */
+    Program* program() {
+        match(TokenType::PROGRAM);
+        Token programIdentifier = match(TokenType::IDENTIFIER);
+        match(TokenType::SEMICOLON);
+
+        // declarations
+        std::vector<Variable*> decls = declarations();
+
+        // methods
+        std::vector<Method*> meths;
+        while (nextToken == TokenType::FUNCTION || nextToken == TokenType::PROCEDURE) {
+            meths.push_back(method());
+        }
+
+        return new Program(programIdentifier, decls, meths);
+    }
+
+    /* --------------- Declarations --------------------- */
+    std::vector<Variable*> declarations() {
+        std::vector<Variable*> declarations;
+
+        if (nextToken == TokenType::VAR) {
+            match(TokenType::VAR);
+            declarations = declaration_line();
+            match(TokenType::SEMICOLON);
+
+
+            // check for more lines
+            while (nextToken == TokenType::IDENTIFIER) {
+                std::vector<Variable*> newDeclarations = declaration_line();
+                match(TokenType::SEMICOLON);
+                // copy the new ones to our declaration list
+                declarations.insert(declarations.end(), newDeclarations.begin(), newDeclarations.end());
+            }
+        }
+
+        return declarations;
+    }
+
+    std::vector<Variable*> declaration_line() {
+        std::vector<Variable*> declarations;
+        std::vector<Token> variableNames;
+        
+        variableNames.push_back(match(TokenType::IDENTIFIER));
+        while (nextToken == TokenType::COMMA) {
+            match(TokenType::COMMA);
+            variableNames.push_back(match(TokenType::IDENTIFIER));
+        }
+
+        match(TokenType::COLON);
+
+        // type
+        Variable::VariableType* variableType = variable_type();
+
+
+        for (Token identifier : variableNames) {
+            declarations.push_back(new Variable(identifier, variableType));
+        }
+
+        return declarations;
+    }
+
+    Variable::VariableType* variable_type() {
+        Variable::VariableType* temp;
+
+        if (nextToken == TokenType::ARRAY) {
+            // array type
+            match(TokenType::ARRAY);
+            match(TokenType::SQUARE_OPEN);
+
+            Token startRange = match(TokenType::LITERAL_INTEGER);
+            match(TokenType::RANGE_DOTS);
+            Token stopRange = match(TokenType::LITERAL_INTEGER);
+
+            match(TokenType::SQUARE_CLOSING);
+
+            match(TokenType::OF);
+
+            if (nextToken == TokenType::INTEGER || nextToken == TokenType::REAL || nextToken == TokenType::BOOLEAN) {
+                temp = new Variable::VariableTypeArray(match(), startRange, stopRange);
+            } else {
+                throw "Expected standard type (integer, real or boolean) after array declaration"; // TODO: better error message
+            }
+        } else {
+            // standard type
+            if (nextToken == TokenType::INTEGER || nextToken == TokenType::REAL || nextToken == TokenType::BOOLEAN) {
+                temp = new Variable::VariableTypeSimple(match());
+            } else {
+                throw "Expected standard type (integer, real or boolean) after array declaration"; // TODO: better error message
+            }
+        }
+
+        return temp;
+    }
+
+
+    /* --------------- Methods --------------------- */
+    Method* method() {
+        if (nextToken == TokenType::FUNCTION || nextToken == TokenType::PROCEDURE) {
+            match();
+
+            Token methodIdentifier = match(TokenType::IDENTIFIER);
+            
+            // arguments
+            match(TokenType::BRACKETS_OPEN);
+            std::vector<Variable*> args = declaration_line();
+
+            while (nextToken == TokenType::SEMICOLON) {
+                match(TokenType::SEMICOLON);
+                std::vector<Variable*> newArgs = declaration_line();
+                args.insert(args.end(), newArgs.begin(), newArgs.end());
+            }
+            
+            match(TokenType::BRACKETS_CLOSING);
+
+            // return type
+            Token* returnType = NULL;
+            if (nextToken == TokenType::COLON) {
+                // method with return value
+                match(TokenType::COLON);
+
+                if (nextToken == TokenType::INTEGER || nextToken == TokenType::REAL || nextToken == TokenType::BOOLEAN) { // TODO: also allow arrays
+                    Token rt = match();
+                    returnType = new Token(rt.type, rt.lexeme, rt.lineNumber);
+                } else {
+                    throw "Expected standard type (integer, real or boolean) as function return type"; // TODO: better error message
+                }
+            }
+            match(TokenType::SEMICOLON);
+
+            // declarations
+            std::vector<Variable*> decls = declarations();
+
+            // block
+            match(TokenType::BEGIN_);
+
+            std::vector<Statement*> statementsInBlock;
+            while (nextToken != TokenType::END_) {
+                statementsInBlock.push_back(statement());
+                match(TokenType::SEMICOLON);
+            }
+            Stmt::Block* methodBlock = new Stmt::Block(statementsInBlock);
+
+            match(TokenType::END_);
+            match(TokenType::SEMICOLON);
+    
+
+            return new Method(methodIdentifier, args, decls, methodBlock, returnType);
+        }
     }
 
 

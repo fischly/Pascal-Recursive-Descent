@@ -7,7 +7,7 @@
 #include <list>
 
 std::string parenthesize(std::string name, const std::list<Expr::Expression*>& expressions);
-
+std::string renderMethod(Method* method);
 
 std::string renderExpression(Expr::Expression* exp) {
 
@@ -104,6 +104,72 @@ std::string renderStatement(Stmt::Statement* stmt) {
     return ss.str();
 }
 
+std::string renderProgram(Program* prog) {
+    std::stringstream ss;
+
+    ss << "(program " << prog->identifier.lexeme << " (defs";
+
+    for (const auto& varDecl : prog->declarations) {
+        ss << " (" << varDecl->name.lexeme << ": ";
+
+        if (Variable::VariableTypeSimple* simpleVar = dynamic_cast<Variable::VariableTypeSimple*>(varDecl->type)) {
+            ss << simpleVar->typeName.lexeme;
+        } else if (Variable::VariableTypeArray* arrayVar = dynamic_cast<Variable::VariableTypeArray*>(varDecl->type)) {
+            ss << arrayVar->typeName.lexeme << "[" << arrayVar->startRange.lexeme << ".." << arrayVar->stopRange.lexeme << "]";
+        }
+
+        ss << ")";
+    }
+
+    ss << ")\n";
+
+    // methods
+    for (const auto& meth : prog->methods) {
+        ss << renderMethod(meth) << "\n\n";
+    }
+
+    return ss.str();
+}
+
+std::string renderMethod(Method* method) {
+    std::stringstream ss;
+
+    ss << "(method " << method->identifier.lexeme << " (args";
+    
+    for (const auto& varArg : method->arguments) {
+        ss << " (" << varArg->name.lexeme << ": ";
+
+        if (Variable::VariableTypeSimple* simpleVar = dynamic_cast<Variable::VariableTypeSimple*>(varArg->type)) {
+            ss << simpleVar->typeName.lexeme;
+        } else if (Variable::VariableTypeArray* arrayVar = dynamic_cast<Variable::VariableTypeArray*>(varArg->type)) {
+            ss << arrayVar->typeName.lexeme << "[" << arrayVar->startRange.lexeme << ".." << arrayVar->stopRange.lexeme << "]";
+        }
+
+        ss << ")";
+    }
+    
+    
+    // << " (defs";
+
+    // for (const auto& varDecl : method->declarations) {
+    //     ss << " (" << varDecl->name.lexeme << ": ";
+
+    //     if (Variable::VariableTypeSimple* simpleVar = dynamic_cast<Variable::VariableTypeSimple*>(varDecl->type)) {
+    //         ss << simpleVar->typeName.lexeme;
+    //     } else if (Variable::VariableTypeArray* arrayVar = dynamic_cast<Variable::VariableTypeArray*>(varDecl->type)) {
+    //         ss << arrayVar->typeName.lexeme << "[" << arrayVar->startRange.lexeme << ".." << arrayVar->stopRange.lexeme << "]";
+    //     }
+
+    //     ss << ")";
+    // }
+
+    ss << ")\n";
+
+    ss << renderStatement(method->block);
+
+    return ss.str();
+}
+
 
 int main(int argc, char **argv) {
     // yyin = fopen("test-code/literalExpression.pas", "r");
@@ -112,11 +178,12 @@ int main(int argc, char **argv) {
 
     Parser p;
     // Expr::Expression* exp = p.expression();
-    Stmt::Statement* stmt = p.statement();
+    // Stmt::Statement* stmt = p.statement();
+    Program* prog = p.program();
 
     std::cout << "\n\n=====================================================\n\n";
 
-    std::cout << renderStatement(stmt);
+    std::cout << renderProgram(prog);
 
     // p.match(TokenType::LITERAL_INTEGER);
    
