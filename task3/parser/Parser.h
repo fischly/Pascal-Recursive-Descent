@@ -63,6 +63,7 @@ public:
             std::vector<Statement*> statementsInBlock;
             while (nextToken != TokenType::END_) {
                 statementsInBlock.push_back(statement());
+                match(TokenType::SEMICOLON);
             }
 
             temp = new Stmt::Block(statementsInBlock);
