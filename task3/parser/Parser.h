@@ -78,6 +78,12 @@ public:
         Expression* temp;
 
         switch (nextToken) {
+            case TokenType::OP_NOT:
+            {
+                Token opToken = match();
+
+                temp = new Expr::Unary(opToken, factor());
+            } break;
             case TokenType::BRACKETS_OPEN:
             {
                 std::cout << "[factor] found BRACKETS_OPEN" << std::endl;
