@@ -12,6 +12,8 @@ extern int yylineno;
 extern char* yytext;
 extern FILE *yyin;
 
+using namespace Expr;
+
 class Parser {
 public:
     Parser() {
@@ -44,13 +46,13 @@ public:
     }
 
 
-    Expression::Expression* expression() {
-        Expression::Expression* temp = term(); // left expression
+    Expression* expression() {
+        Expression* temp = term(); // left expression
 
         while (nextToken == TokenType::OP_ADD || nextToken == TokenType::OP_SUB) { // TODO: change to all strich operators
             Token operatorToken = match();
 
-            temp = new Expression::Binary(temp, operatorToken, term());
+            temp = new Binary(temp, operatorToken, term());
         }
 
         return temp;
@@ -60,27 +62,27 @@ public:
 
     }
 
-    Expression::Expression* term() {
-        Expression::Expression* temp = factor();
+    Expression* term() {
+        Expression* temp = factor();
 
         while (nextToken == TokenType::OP_MUL) { // TODO: change to all punkt operators
             Token operatorToken = match();
 
-            temp = new Expression::Binary(temp, operatorToken, factor());
+            temp = new Binary(temp, operatorToken, factor());
         }
 
         return temp;
     }
 
-    Expression::Expression* factor() {
-        Expression::Expression* temp;
+    Expression* factor() {
+        Expression* temp;
 
         switch (nextToken) {
             case TokenType::BRACKETS_OPEN:
                 std::cout << "[factor] found BRACKETS_OPEN" << std::endl;
 
                 match(TokenType::BRACKETS_OPEN);
-                temp = new Expression::Grouping(expression());
+                temp = new Grouping(expression());
                 match(TokenType::BRACKETS_CLOSING);
 
                 break;
@@ -88,7 +90,7 @@ public:
                 std::cout << "[factor] found LITERAL_INTEGER (" << yytext << ")" << std::endl;
 
                 Token literalIntegerToken = match();
-                temp = new Expression::Literal{literalIntegerToken};
+                temp = new Literal{literalIntegerToken};
                 // match(TokenType::LITERAL_INTEGER);
                 break;
         }

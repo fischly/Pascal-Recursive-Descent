@@ -7,7 +7,7 @@
 #include "Token.h"
 #include "../../common/token-enum.h"
 
-namespace Expression {
+namespace Expr {
     /* Base class for all expressions */
     class Expression {
     public:

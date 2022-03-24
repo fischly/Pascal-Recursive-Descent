@@ -6,40 +6,40 @@
 #include <sstream>
 #include <list>
 
-std::string parenthesize(std::string name, const std::list<Expression::Expression*>& expressions);
+std::string parenthesize(std::string name, const std::list<Expr::Expression*>& expressions);
 
 
-std::string renderExpression(Expression::Expression* exp) {
+std::string renderExpression(Expr::Expression* exp) {
 
-    if (Expression::Binary* binaryExpression = dynamic_cast<Expression::Binary*>(exp)) {
+    if (Expr::Binary* binaryExpression = dynamic_cast<Expr::Binary*>(exp)) {
         // std::cout << "GOT BINARY EXPRESSION: operator = " << binaryExpression->op.lexeme << std::endl;
         return parenthesize(binaryExpression->op.lexeme, {binaryExpression->left, binaryExpression->right});
     } 
-    else if (Expression::Call* callExpression = dynamic_cast<Expression::Call*>(exp)) {
+    else if (Expr::Call* callExpression = dynamic_cast<Expr::Call*>(exp)) {
         // std::cout << "GOT CALL EXPRESSION: callee = " << callExpression->callee.lexeme << std::endl;
         
         // convert the vector to list
-        std::list<Expression::Expression*> exprList;
+        std::list<Expr::Expression*> exprList;
         std::copy(callExpression->arguments.begin(), callExpression->arguments.end(), std::back_inserter(exprList));
 
         return parenthesize(callExpression->callee.lexeme, exprList);
     }
-    else if (Expression::Grouping* groupingExpression = dynamic_cast<Expression::Grouping*>(exp)) {
+    else if (Expr::Grouping* groupingExpression = dynamic_cast<Expr::Grouping*>(exp)) {
         // std::cout << "GOT GROUPING EXPRESSION! " << std::endl;
         return parenthesize("group", {groupingExpression->expression});
     }
-    else if (Expression::Literal* literalExpression = dynamic_cast<Expression::Literal*>(exp)) {
+    else if (Expr::Literal* literalExpression = dynamic_cast<Expr::Literal*>(exp)) {
         // std::cout << "GOT LITERAL EXPRESSION: " << literalExpression->token.lexeme << std::endl;
         return std::string(literalExpression->token.lexeme);
     }
-    else if (Expression::Unary* unaryExpression = dynamic_cast<Expression::Unary*>(exp)) {
+    else if (Expr::Unary* unaryExpression = dynamic_cast<Expr::Unary*>(exp)) {
         return parenthesize(unaryExpression->op.lexeme, {unaryExpression->right});
     }
 
     return "";
 }
 
-std::string parenthesize(std::string name, const std::list<Expression::Expression*>& expressions) {
+std::string parenthesize(std::string name, const std::list<Expr::Expression*>& expressions) {
     std::stringstream ss;
     ss << "(" << name;
 
@@ -60,7 +60,7 @@ int main(int argc, char **argv) {
     std::cout << "Hello world from parser" << std::endl;
 
     Parser p;
-    Expression::Expression* exp = p.expression();
+    Expr::Expression* exp = p.expression();
 
     std::cout << "\n\n=====================================================\n\n";
 
