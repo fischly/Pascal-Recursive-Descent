@@ -12,7 +12,7 @@ extern int yylineno;
 extern char* yytext;
 extern FILE *yyin;
 
-using namespace Expr;
+using Expr::Expression;
 
 class Parser {
 public:
@@ -52,7 +52,7 @@ public:
         while (nextToken == TokenType::OP_ADD || nextToken == TokenType::OP_SUB) { // TODO: change to all strich operators
             Token operatorToken = match();
 
-            temp = new Binary(temp, operatorToken, term());
+            temp = new Expr::Binary(temp, operatorToken, term());
         }
 
         return temp;
@@ -68,7 +68,7 @@ public:
         while (nextToken == TokenType::OP_MUL) { // TODO: change to all punkt operators
             Token operatorToken = match();
 
-            temp = new Binary(temp, operatorToken, factor());
+            temp = new Expr::Binary(temp, operatorToken, factor());
         }
 
         return temp;
@@ -82,15 +82,17 @@ public:
                 std::cout << "[factor] found BRACKETS_OPEN" << std::endl;
 
                 match(TokenType::BRACKETS_OPEN);
-                temp = new Grouping(expression());
+                temp = new Expr::Grouping(expression());
                 match(TokenType::BRACKETS_CLOSING);
 
                 break;
             case TokenType::LITERAL_INTEGER:
-                std::cout << "[factor] found LITERAL_INTEGER (" << yytext << ")" << std::endl;
+            case TokenType::LITERAL_REAL:
+            case TokenType::LITERAL_STRING:
+                std::cout << "[factor] found LITERAL (" << yytext << ")" << std::endl;
 
                 Token literalIntegerToken = match();
-                temp = new Literal{literalIntegerToken};
+                temp = new Expr::Literal{literalIntegerToken};
                 // match(TokenType::LITERAL_INTEGER);
                 break;
         }
