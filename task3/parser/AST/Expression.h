@@ -43,6 +43,13 @@ namespace Expr {
         Expression* expression;
     };
 
+    class Identifier : public Expression {
+    public:
+        Identifier(Token token) : token{token} {}
+
+        Token token;
+    };
+
     class Literal : public Expression {
     public:
         Literal(Token token) : token{token} {}

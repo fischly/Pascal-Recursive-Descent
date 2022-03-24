@@ -28,6 +28,10 @@ std::string renderExpression(Expr::Expression* exp) {
         // std::cout << "GOT GROUPING EXPRESSION! " << std::endl;
         return parenthesize("group", {groupingExpression->expression});
     }
+    else if (Expr::Identifier* identifierExpression = dynamic_cast<Expr::Identifier*>(exp)) {
+        // std::cout << "GOT IDENTIFIER EXPRESSION: " << identifierExpression->token.lexeme << std::endl;
+        return std::string(identifierExpression->token.lexeme);
+    }
     else if (Expr::Literal* literalExpression = dynamic_cast<Expr::Literal*>(exp)) {
         // std::cout << "GOT LITERAL EXPRESSION: " << literalExpression->token.lexeme << std::endl;
         return std::string(literalExpression->token.lexeme);

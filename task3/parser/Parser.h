@@ -79,22 +79,45 @@ public:
 
         switch (nextToken) {
             case TokenType::BRACKETS_OPEN:
+            {
                 std::cout << "[factor] found BRACKETS_OPEN" << std::endl;
 
                 match(TokenType::BRACKETS_OPEN);
                 temp = new Expr::Grouping(expression());
                 match(TokenType::BRACKETS_CLOSING);
 
-                break;
+            } break;
+
             case TokenType::LITERAL_INTEGER:
             case TokenType::LITERAL_REAL:
-            case TokenType::LITERAL_STRING:
+            case TokenType::LITERAL_STRING: 
+            {
                 std::cout << "[factor] found LITERAL (" << yytext << ")" << std::endl;
 
-                Token literalIntegerToken = match();
-                temp = new Expr::Literal{literalIntegerToken};
-                // match(TokenType::LITERAL_INTEGER);
-                break;
+                Token literalToken = match();
+                temp = new Expr::Literal{literalToken};
+            } break;
+
+            case TokenType::IDENTIFIER:
+            {
+                Token identifierToken = match();
+
+                // check if we have a function call (starts with opening bracket)
+                if (nextToken == TokenType::BRACKETS_OPEN) {
+                    // a function call
+                    match(TokenType::BRACKETS_OPEN);
+
+                    std::cout << "[factor] found FUNCTION CALL (" << yytext << ")" << std::endl;
+                    temp = new Expr::Call(identifierToken, std::vector<Expression*>{}); // TODO: parse arguments as expression list
+
+                    match(TokenType::BRACKETS_CLOSING);
+                    
+                } else {
+                    // just a regular identifier
+                    std::cout << "[factor] found IDENTIFIER (" << yytext << ")" << std::endl;
+                    temp = new Expr::Identifier(identifierToken);
+                }
+            } break;
         }
 
         return temp;
