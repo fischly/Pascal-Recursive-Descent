@@ -20,11 +20,13 @@ int main(int argc, char **argv) {
     std::cout << "\n\n=====================================================\n\n";
 
     // std::cout << renderProgram(prog);
-    AST2Text ast2text;
+    AST2Dot ast2text;
     // exp->accept(&ast2text);
     prog->accept(&ast2text);
 
     std::cout << ast2text.getResult() << std::endl;
+
+
 
     // p.match(TokenType::LITERAL_INTEGER);
    

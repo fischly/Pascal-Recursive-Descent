@@ -14,6 +14,7 @@
 #include "AST/Program.h"
 
 #include "AST/Visitors/AST2Text.h"
+#include "AST/Visitors/AST2Dot.h"
 
 extern int yylex();
 extern int yylineno;

@@ -5,7 +5,7 @@ program minipas;
       x: array [1..100] of real;
 
 
-  { Calculate greatest common divisor of a and b }
+
 
   function gcd (a, b: integer) : integer;
   begin
@@ -19,6 +19,7 @@ program minipas;
       gcd := b
     else gcd := a;
   end;
+
 
   function factorial (a: integer) : integer;
   var k, fact: integer;
@@ -43,9 +44,7 @@ program minipas;
         sum := sum+k;
         k := k+1;
       end;
-      { verify if the sum is correct }
       if s <> n*(n+1)/2 then
         sum := -1
       else sum := s;
     end;
-
