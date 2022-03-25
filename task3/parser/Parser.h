@@ -41,7 +41,6 @@ public:
         } else {
             throw SyntaxException(nextToken, expectedToken, yylineno);
         }
-
     }
 
     /* Matches every token and consumes it */
@@ -56,8 +55,9 @@ public:
     }
 
     /* =========================================================================================================================== */
-    /* ========= Program and methods  ============================================================================================ */
+    /* ========= Program ========================================================================================================= */
     /* =========================================================================================================================== */
+
     Program* program() {
         match(TokenType::PROGRAM);
         Token programIdentifier = match(TokenType::IDENTIFIER);
@@ -155,55 +155,63 @@ public:
         }
     }
 
-    /* --------------- Methods --------------------- */
+
+    /* =========================================================================================================================== */
+    /* ========= Methods ========================================================================================================= */
+    /* =========================================================================================================================== */
+
     Method* method() {
-        if (nextToken == TokenType::FUNCTION || nextToken == TokenType::PROCEDURE) {
-            match();
+        Token matched = match();
 
-            Token methodIdentifier = match(TokenType::IDENTIFIER);
-            
-            // arguments
-            match(TokenType::BRACKETS_OPEN);
-            std::vector<Variable*> args = declaration_line();
-
-            while (nextToken == TokenType::SEMICOLON) {
-                match(TokenType::SEMICOLON);
-                std::vector<Variable*> newArgs = declaration_line();
-                args.insert(args.end(), newArgs.begin(), newArgs.end());
-            }
-            
-            match(TokenType::BRACKETS_CLOSING);
-
-            // return type
-            Token* returnType = NULL;
-            if (nextToken == TokenType::COLON) {
-                // method with return value
-                match(TokenType::COLON);
-
-                Token rt = standard_type();
-                returnType = new Token(rt.type, rt.lexeme, rt.lineNumber);
-            }
-            match(TokenType::SEMICOLON);
-
-            // declarations
-            std::vector<Variable*> decls = declarations();
-
-            // block
-            match(TokenType::BEGIN_);
-
-            std::vector<Statement*> statementsInBlock;
-            while (nextToken != TokenType::END_) {
-                statementsInBlock.push_back(statement());
-                match(TokenType::SEMICOLON);
-            }
-            Stmt::Block* methodBlock = new Stmt::Block(statementsInBlock);
-
-            match(TokenType::END_);
-            match(TokenType::SEMICOLON);
-    
-
-            return new Method(methodIdentifier, args, decls, methodBlock, returnType);
+        if (matched.type != TokenType::FUNCTION && matched.type != TokenType::PROCEDURE) {
+            std::stringstream ss;
+            ss << "Expected method declaration (starting with either 'function' or 'procedure') but got " << TOKEN_NAMES[nextToken] << " at line " << yylineno;
+            throw SyntaxException(ss.str().c_str());
         }
+
+        Token methodIdentifier = match(TokenType::IDENTIFIER);
+        
+        // arguments
+        match(TokenType::BRACKETS_OPEN);
+        std::vector<Variable*> args = declaration_line();
+
+        while (nextToken == TokenType::SEMICOLON) {
+            match(TokenType::SEMICOLON);
+            std::vector<Variable*> newArgs = declaration_line();
+            args.insert(args.end(), newArgs.begin(), newArgs.end());
+        }
+        
+        match(TokenType::BRACKETS_CLOSING);
+
+        // return type
+        Token* returnType = NULL;
+        if (nextToken == TokenType::COLON) {
+            // method with return value
+            match(TokenType::COLON);
+
+            Token rt = standard_type();
+            returnType = new Token(rt.type, rt.lexeme, rt.lineNumber);
+        }
+        match(TokenType::SEMICOLON);
+
+        // declarations
+        std::vector<Variable*> decls = declarations();
+
+        // block
+        match(TokenType::BEGIN_);
+
+        std::vector<Statement*> statementsInBlock;
+        while (nextToken != TokenType::END_) {
+            statementsInBlock.push_back(statement());
+            match(TokenType::SEMICOLON);
+        }
+        Stmt::Block* methodBlock = new Stmt::Block(statementsInBlock);
+
+        match(TokenType::END_);
+        match(TokenType::SEMICOLON);
+
+
+        return new Method(methodIdentifier, args, decls, methodBlock, returnType);
     }
 
 
@@ -330,7 +338,7 @@ public:
         temp = term();
 
         // add operations
-        while (nextToken == TokenType::OP_ADD || nextToken == TokenType::OP_SUB || nextToken == TokenType::OP_OR) { // TODO: change to all strich operators
+        while (nextToken == TokenType::OP_ADD || nextToken == TokenType::OP_SUB || nextToken == TokenType::OP_OR) {
             Token opToken = match();
             temp = new Expr::Binary(temp, opToken, term());
         }
@@ -367,8 +375,6 @@ public:
             // groupings (with brackets)
             case TokenType::BRACKETS_OPEN:
             {
-                std::cout << "[factor] found BRACKETS_OPEN" << std::endl;
-
                 match(TokenType::BRACKETS_OPEN);
                 temp = new Expr::Grouping(expression());
                 match(TokenType::BRACKETS_CLOSING);
@@ -380,8 +386,6 @@ public:
             case TokenType::LITERAL_REAL:
             case TokenType::LITERAL_STRING: 
             {
-                std::cout << "[factor] found LITERAL (" << yytext << ")" << std::endl;
-
                 Token literalToken = match();
                 temp = new Expr::Literal{literalToken};
             } break;
@@ -395,8 +399,6 @@ public:
                 if (nextToken == TokenType::BRACKETS_OPEN) {
                     // a function call
                     match(TokenType::BRACKETS_OPEN);
-
-                    std::cout << "[factor] found FUNCTION CALL (" << yytext << ")" << std::endl;
 
                     // matching argument list (list of expressions)
                     std::vector<Expression*> argumentList;
@@ -415,7 +417,6 @@ public:
                     
                 } else {
                     // just a regular identifier
-                    std::cout << "[factor] found IDENTIFIER (" << yytext << ")" << std::endl;
                     temp = new Expr::Identifier(identifierToken);
                 }
             } break;
