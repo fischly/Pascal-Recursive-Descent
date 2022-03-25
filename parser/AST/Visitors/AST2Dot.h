@@ -195,7 +195,8 @@ public:
     };
 
     void visitIdentifier(Expr::Identifier* expr) {
-
+        auto exprNodeName = getNodeName(expr);
+        
         ss << "\n" << exprNodeName << " [label = \"" << expr->token.lexeme << "\", fillcolor=darkseagreen1, style=filled];\n";
     };
 
