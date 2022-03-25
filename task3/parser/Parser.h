@@ -13,6 +13,8 @@
 #include "AST/Method.h"
 #include "AST/Program.h"
 
+#include "AST/Visitors/AST2Text.h"
+
 extern int yylex();
 extern int yylineno;
 extern char* yytext;
