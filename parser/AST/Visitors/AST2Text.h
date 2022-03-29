@@ -78,7 +78,7 @@ public:
             } else if (Variable::VariableTypeArray* arrayVar = dynamic_cast<Variable::VariableTypeArray*>(argVar->type)) {
                 ss << arrayVar->typeName.lexeme << "[" << arrayVar->startRange.lexeme << ".." << arrayVar->stopRange.lexeme << "]";
             }
-
+            
             ss << ")";
         }
 
@@ -172,6 +172,12 @@ public:
 
     void visitIdentifier(Expr::Identifier* expr) {
         ss << expr->token.lexeme;
+
+        if (expr->arrayIndexExpression != NULL) {
+            ss << "[";
+            expr->arrayIndexExpression->accept(this);
+            ss << "]";
+        }
     };
 
     void visitLiteral(Expr::Literal* expr) {

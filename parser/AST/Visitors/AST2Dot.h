@@ -86,6 +86,16 @@ public:
 
         ss << "\n";
         ss << stmtNodeName << " [label = \"" << stmt->identifier.lexeme << " = \"];\n";
+
+        // array index expression
+        if (stmt->arrayIndex != NULL) {
+            auto arrayIndexNodeName = getNodeName(stmt->arrayIndex);
+
+            ss << stmtNodeName << " -> " << arrayIndexNodeName  << ";\n";
+
+            stmt->arrayIndex->accept(this);
+        }
+
         ss << stmtNodeName << " -> " << valueNodeName << ";\n\n";
 
         stmt->value->accept(this);

@@ -16,10 +16,10 @@
 #include "AST/Visitors/AST2Text.h"
 #include "AST/Visitors/AST2Dot.h"
 
-extern int yylex();
-extern int yylineno;
-extern char* yytext;
-extern FILE *yyin;
+// extern int yylex();
+// extern int yylineno;
+// extern char* yytext;
+// extern FILE *yyin;
 
 using Expr::Expression;
 using Stmt::Statement;
@@ -100,8 +100,8 @@ public:
 
     std::vector<Variable*> declaration_line() {
         std::vector<Variable*> declarations;
+
         std::vector<Token> variableNames;
-        
         variableNames.push_back(match(TokenType::IDENTIFIER));
         while (nextToken == TokenType::COMMA) {
             match(TokenType::COMMA);
@@ -137,16 +137,18 @@ public:
 
             match(TokenType::OF);
 
-            temp = new Variable::VariableTypeArray(standard_type(), startRange, stopRange);
+            Token typeName = simple_type();
+
+            temp = new Variable::VariableTypeArray(typeName, startRange, stopRange);
         } else {
             // standard type
-            temp = new Variable::VariableTypeSimple(standard_type());
+            temp = new Variable::VariableTypeSimple(simple_type());
         }
 
         return temp;
     }
 
-    Token standard_type() {
+    Token simple_type() {
         if (nextToken == TokenType::INTEGER || nextToken == TokenType::REAL || nextToken == TokenType::BOOLEAN) {
             return match();
         } else {
@@ -162,24 +164,28 @@ public:
     /* =========================================================================================================================== */
 
     Method* method() {
-        Token matched = match();
-
-        if (matched.type != TokenType::FUNCTION && matched.type != TokenType::PROCEDURE) {
+        if (nextToken != TokenType::FUNCTION && nextToken != TokenType::PROCEDURE) {
             std::stringstream ss;
             ss << "Expected method declaration (starting with either 'function' or 'procedure') but got " << TOKEN_NAMES[nextToken] << " at line " << yylineno;
             throw SyntaxException(ss.str().c_str());
         }
 
+        match(); // consume FUNCTION or PROCEDURE token
+
         Token methodIdentifier = match(TokenType::IDENTIFIER);
         
         // arguments
         match(TokenType::BRACKETS_OPEN);
-        std::vector<Variable*> args = declaration_line();
 
-        while (nextToken == TokenType::SEMICOLON) {
-            match(TokenType::SEMICOLON);
-            std::vector<Variable*> newArgs = declaration_line();
-            args.insert(args.end(), newArgs.begin(), newArgs.end());
+        std::vector<Variable*> args;
+        if (nextToken == TokenType::IDENTIFIER) {
+            args = declaration_line();
+
+            while (nextToken == TokenType::SEMICOLON) {
+                match(TokenType::SEMICOLON);
+                std::vector<Variable*> newArgs = declaration_line();
+                args.insert(args.end(), newArgs.begin(), newArgs.end());
+            }
         }
         
         match(TokenType::BRACKETS_CLOSING);
@@ -190,7 +196,7 @@ public:
             // method with return value
             match(TokenType::COLON);
 
-            Token rt = standard_type();
+            Token rt = simple_type(); // TODO: allow arrays also
             returnType = new Token(rt.type, rt.lexeme, rt.lineNumber);
         }
         match(TokenType::SEMICOLON);
@@ -202,9 +208,15 @@ public:
         match(TokenType::BEGIN_);
 
         std::vector<Statement*> statementsInBlock;
-        while (nextToken != TokenType::END_) {
+
+        if (nextToken != TokenType::END_) {
             statementsInBlock.push_back(statement());
-            match(TokenType::SEMICOLON);
+
+            while (nextToken != TokenType::END_) {
+                match(TokenType::SEMICOLON);
+
+                statementsInBlock.push_back(statement());
+            }
         }
         Stmt::Block* methodBlock = new Stmt::Block(statementsInBlock);
 
@@ -228,9 +240,15 @@ public:
             match(TokenType::BEGIN_);
 
             std::vector<Statement*> statementsInBlock;
-            while (nextToken != TokenType::END_) {
+
+            if (nextToken != TokenType::END_) {
                 statementsInBlock.push_back(statement());
-                match(TokenType::SEMICOLON);
+
+                while (nextToken != TokenType::END_) {
+                    match(TokenType::SEMICOLON);
+
+                    statementsInBlock.push_back(statement());
+                }
             }
 
             temp = new Stmt::Block(statementsInBlock);
@@ -319,8 +337,9 @@ public:
             nextToken == TokenType::OP_LESS_EQUAL || nextToken == TokenType::OP_GREATER || nextToken == TokenType::OP_GREATER_EQUAL) {
 
             Token operatorToken = match();
+            Expression* rightSide = simple_expression();
 
-            temp = new Expr::Binary(temp, operatorToken, simple_expression());
+            temp = new Expr::Binary(temp, operatorToken, rightSide);
         }
 
         return temp;
@@ -332,7 +351,9 @@ public:
         // optional (minus) sign
         if (nextToken == TokenType::OP_SUB) { // sign/unary minus
             Token opToken = match(TokenType::OP_SUB);
-            temp = new Expr::Unary(opToken, term());
+            Expression* rightSide = term();
+
+            temp = new Expr::Unary(opToken, rightSide);
         }
 
         // main term
@@ -341,7 +362,9 @@ public:
         // add operations
         while (nextToken == TokenType::OP_ADD || nextToken == TokenType::OP_SUB || nextToken == TokenType::OP_OR) {
             Token opToken = match();
-            temp = new Expr::Binary(temp, opToken, term());
+            Expression* rightSide = term();
+
+            temp = new Expr::Binary(temp, opToken, rightSide);
         }
 
         return temp;
@@ -354,8 +377,9 @@ public:
         // mult operations
         while (nextToken == TokenType::OP_MUL || nextToken == TokenType::OP_DIV || nextToken == TokenType::OP_INTEGER_DIV || nextToken == TokenType::OP_AND) {
             Token operatorToken = match();
+            Expression* rightSide = factor();
 
-            temp = new Expr::Binary(temp, operatorToken, factor());
+            temp = new Expr::Binary(temp, operatorToken, rightSide);
         }
 
         return temp;
@@ -418,7 +442,16 @@ public:
                     
                 } else {
                     // just a regular identifier
-                    temp = new Expr::Identifier(identifierToken);
+                    Expression* arrayIndexExpression = NULL;
+
+                    if (nextToken == TokenType::SQUARE_OPEN) {
+                        match(TokenType::SQUARE_OPEN);
+                        arrayIndexExpression = expression();
+                        match(TokenType::SQUARE_CLOSING);
+
+                    }
+
+                    temp = new Expr::Identifier(identifierToken, arrayIndexExpression);
                 }
             } break;
         }

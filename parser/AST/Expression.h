@@ -62,7 +62,7 @@ namespace Expr {
     class Grouping : public Expression {
     public:
         Grouping(Expression* expression) : expression{expression} {}
-
+        
         Expression* expression;
 
         void accept(Visitor* visitor) { visitor->visitGrouping(this); }
@@ -70,9 +70,11 @@ namespace Expr {
 
     class Identifier : public Expression {
     public:
-        Identifier(Token token) : token{token} {}
+        Identifier(Token token, Expression* arrayIndexExpression) 
+            : token{token}, arrayIndexExpression{arrayIndexExpression} {}
 
         Token token;
+        Expression* arrayIndexExpression;
 
         void accept(Visitor* visitor) { visitor->visitIdentifier(this); }
     };
@@ -80,7 +82,7 @@ namespace Expr {
     class Literal : public Expression {
     public:
         Literal(Token token) : token{token} {}
-
+        
         Token token;
 
         void accept(Visitor* visitor) { visitor->visitLiteral(this); }
