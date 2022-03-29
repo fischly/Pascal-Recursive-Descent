@@ -34,6 +34,7 @@ wrong_identifier [0-9][a-zA-Z0-9_]*
  /* --- Keywords --- */
 program     { return TokenType::PROGRAM; }
 function    { return TokenType::FUNCTION; }
+procedure   { return TokenType::PROCEDURE; }
 begin       { return TokenType::BEGIN_; }
 end         { return TokenType::END_; }
 
