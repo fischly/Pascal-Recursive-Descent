@@ -89,9 +89,12 @@ or          { return TokenType::OP_OR; }
 
 
  /* Literals */
+true                { return TokenType::LITERAL_TRUE; }
+false               { return TokenType::LITERAL_FALSE; }
 {integer}           { return TokenType::LITERAL_INTEGER; }
 {real}              { return TokenType::LITERAL_REAL; }
 {string}            { return TokenType::LITERAL_STRING; }
+
 
  /* Identifier */
 {identifier}        { return TokenType::IDENTIFIER; }

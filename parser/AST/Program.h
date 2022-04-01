@@ -17,13 +17,26 @@ public:
         virtual void visitProgram(Program* prog) {};
     };
 
-    Program(Token identifier, std::vector<Variable*> declarations, std::vector<Method*> methods)
-        : identifier{identifier}, declarations{declarations}, methods{methods}
+    Program(Token identifier, std::vector<Variable*> declarations, std::vector<Method*> methods, Stmt::Block* main)
+        : identifier{identifier}, declarations{declarations}, methods{methods}, main{main}
     {}
+
+    ~Program() {
+        for (auto& decl : declarations) {
+            delete decl;
+        }
+
+        for (auto& meth : methods) {
+            delete meth;
+        }
+
+        delete main;
+    }
 
     Token identifier;
     std::vector<Variable*> declarations;
     std::vector<Method*> methods;
+    Stmt::Block* main;
 
     void accept(Visitor* visitor) { visitor->visitProgram(this); }
 };

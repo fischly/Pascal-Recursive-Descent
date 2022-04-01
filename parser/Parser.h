@@ -73,7 +73,12 @@ public:
             meths.push_back(method());
         }
 
-        return new Program(programIdentifier, decls, meths);
+        // match main
+        Stmt::Block* main = statement_block();
+
+        match(TokenType::DOT);
+
+        return new Program(programIdentifier, decls, meths, main);
     }
 
     /* --------------- Declarations --------------------- */
@@ -170,8 +175,7 @@ public:
             throw SyntaxException(ss.str().c_str());
         }
 
-        match(); // consume FUNCTION or PROCEDURE token
-
+        Token methodKeyword = match(); // consume FUNCTION or PROCEDURE token
         Token methodIdentifier = match(TokenType::IDENTIFIER);
         
         // arguments
@@ -191,15 +195,28 @@ public:
         match(TokenType::BRACKETS_CLOSING);
 
         // return type
-        Token* returnType = NULL;
+        Variable::VariableType* returnType = NULL;
         if (nextToken == TokenType::COLON) {
+            // throw exception when a procedure has a return type
+            if (methodKeyword.type == TokenType::PROCEDURE) {
+                std::stringstream ss;
+                ss << "Procedure cannot have a return type at line " << yylineno;
+                throw SyntaxException(ss.str().c_str());
+            }
+
             // method with return value
             match(TokenType::COLON);
 
-            Token rt = simple_type(); // TODO: allow arrays also
-            returnType = new Token(rt.type, rt.lexeme, rt.lineNumber);
+            returnType = variable_type();
         }
         match(TokenType::SEMICOLON);
+
+        // throw exception when a function has no return type
+        if (returnType == NULL && methodKeyword.type == TokenType::FUNCTION) {
+            std::stringstream ss;
+            ss << "Function must have a return type at line " << yylineno;
+            throw SyntaxException(ss.str().c_str());
+        }
 
         // declarations
         std::vector<Variable*> decls = declarations();
@@ -223,7 +240,6 @@ public:
         match(TokenType::END_);
         match(TokenType::SEMICOLON);
 
-
         return new Method(methodIdentifier, args, decls, methodBlock, returnType);
     }
 
@@ -232,93 +248,112 @@ public:
     /* ========= Statements  ===================================================================================================== */
     /* =========================================================================================================================== */
 
+    Stmt::Block* statement_block() {
+        match(TokenType::BEGIN_);
+
+        std::vector<Statement*> statementsInBlock;
+
+        if (nextToken != TokenType::END_) {
+            statementsInBlock.push_back(statement());
+
+            while (nextToken != TokenType::END_) {
+                match(TokenType::SEMICOLON);
+
+                statementsInBlock.push_back(statement());
+            }
+        }
+
+        match(TokenType::END_);
+
+        return new Stmt::Block(statementsInBlock);
+    }
+
+    Stmt::While* statement_while() {
+        match(TokenType::WHILE);
+
+        Expression* condition = expression();
+        match(TokenType::DO);
+        Statement* body = statement();
+
+        return new Stmt::While(condition, body);
+    }
+
+    Stmt::If* statment_if() {
+        match(TokenType::IF);
+
+        Expression* condition = expression();
+        match(TokenType::THEN);
+        Statement* thenBody = statement();
+        Statement* elseBody = NULL;
+
+        if (nextToken == TokenType::ELSE) {
+            match(TokenType::ELSE);
+
+            elseBody = statement();
+        }
+
+        return new Stmt::If(condition, thenBody, elseBody);
+    }
+
+    Stmt::Call* statement_method_call(Token identifierToken) {
+         match(TokenType::BRACKETS_OPEN);
+
+        std::vector<Expression*> argumentList;
+        if (nextToken != TokenType::BRACKETS_CLOSING) {
+            argumentList.push_back(expression());
+
+            while (nextToken == TokenType::COMMA) {
+                match(TokenType::COMMA);
+                argumentList.push_back(expression());
+            }
+        }
+
+        match(TokenType::BRACKETS_CLOSING);
+
+        return new Stmt::Call(identifierToken, argumentList); 
+    }
+
+    Stmt::Assignment* statement_assignment(Token identifierToken) {
+        Expression* arrayIndexValue = NULL;
+        if (nextToken == TokenType::SQUARE_OPEN) {
+            match(TokenType::SQUARE_OPEN);
+            arrayIndexValue = expression();
+            match(TokenType::SQUARE_CLOSING);
+        }
+
+        match(TokenType::OP_ASSIGNMENT);
+
+        Expression* assignmentValue = expression();
+
+        return new Stmt::Assignment(identifierToken, arrayIndexValue, assignmentValue);
+    }
+    
+    
+
     Statement* statement() {
         Statement* temp;
 
-        // block
-        if (nextToken == TokenType::BEGIN_) {
-            match(TokenType::BEGIN_);
-
-            std::vector<Statement*> statementsInBlock;
-
-            if (nextToken != TokenType::END_) {
-                statementsInBlock.push_back(statement());
-
-                while (nextToken != TokenType::END_) {
-                    match(TokenType::SEMICOLON);
-
-                    statementsInBlock.push_back(statement());
-                }
-            }
-
-            temp = new Stmt::Block(statementsInBlock);
-
-            match(TokenType::END_);
-        }
-        // while
-        else if (nextToken == TokenType::WHILE) {
-            match(TokenType::WHILE);
-
-            Expression* condition = expression();
-            match(TokenType::DO);
-            Statement* body = statement();
-
-            temp = new Stmt::While(condition, body);
-        }
-        // if
-        else if (nextToken == TokenType::IF) {
-            match(TokenType::IF);
-
-            Expression* condition = expression();
-            match(TokenType::THEN);
-            Statement* thenBody = statement();
-            Statement* elseBody = NULL;
-
-            if (nextToken == TokenType::ELSE) {
-                match(TokenType::ELSE);
-
-                elseBody = statement();
-            }
-
-            temp = new Stmt::If(condition, thenBody, elseBody);
-        }
-
-        else if (nextToken == TokenType::IDENTIFIER) {
-            Token identifierToken = match(TokenType::IDENTIFIER);
+        switch (nextToken) {
+            case TokenType::BEGIN_: temp = statement_block(); break;
+            case TokenType::WHILE: temp = statement_while(); break;
+            case TokenType::IF: temp = statment_if(); break;
+            case TokenType::IDENTIFIER: {
+                Token identifierToken = match(TokenType::IDENTIFIER);
             
-            // method call
-            if (nextToken == TokenType::BRACKETS_OPEN) {
-                match(TokenType::BRACKETS_OPEN);
-
-                std::vector<Expression*> argumentList;
-                if (nextToken != TokenType::BRACKETS_CLOSING) {
-                    argumentList.push_back(expression());
-
-                    while (nextToken == TokenType::COMMA) {
-                        match(TokenType::COMMA);
-                        argumentList.push_back(expression());
-                    }
+                // method call
+                if (nextToken == TokenType::BRACKETS_OPEN) {
+                    temp = statement_method_call(identifierToken);
                 }
-
-                temp = new Stmt::Call(identifierToken, argumentList); 
-
-                match(TokenType::BRACKETS_CLOSING);
-            }
-            // assignment
-            else {
-                Expression* arrayIndexValue = NULL;
-                if (nextToken == TokenType::SQUARE_OPEN) {
-                    match(TokenType::SQUARE_OPEN);
-                    arrayIndexValue = expression();
-                    match(TokenType::SQUARE_CLOSING);
+                // assignment
+                else {
+                    temp = statement_assignment(identifierToken);
                 }
-
-                match(TokenType::OP_ASSIGNMENT);
-
-                Expression* assignmentValue = expression();
-
-                temp = new Stmt::Assignment(identifierToken, arrayIndexValue, assignmentValue);
-            }
+            } break;
+            default: {
+                std::stringstream ss;
+                ss << "Expected statement, but got token '" << TOKEN_NAMES[nextToken] << "' at line " << yylineno;
+                throw SyntaxException(ss.str().c_str());
+            }; break;
         }
 
         return temp;
@@ -346,18 +381,7 @@ public:
     }
 
     Expression* simple_expression() {
-        Expression* temp;
-
-        // optional (minus) sign
-        if (nextToken == TokenType::OP_SUB) { // sign/unary minus
-            Token opToken = match(TokenType::OP_SUB);
-            Expression* rightSide = term();
-
-            temp = new Expr::Unary(opToken, rightSide);
-        }
-
-        // main term
-        temp = term();
+        Expression* temp = term();
 
         // add operations
         while (nextToken == TokenType::OP_ADD || nextToken == TokenType::OP_SUB || nextToken == TokenType::OP_OR) {
@@ -389,7 +413,8 @@ public:
         Expression* temp;
 
         switch (nextToken) {
-            // arbitrary amount of "not"'s
+            // arbitrary amount of "not"'s or "-"'s
+            case TokenType::OP_SUB:
             case TokenType::OP_NOT:
             {
                 Token opToken = match();
@@ -410,6 +435,8 @@ public:
             case TokenType::LITERAL_INTEGER:
             case TokenType::LITERAL_REAL:
             case TokenType::LITERAL_STRING: 
+            case TokenType::LITERAL_TRUE:
+            case TokenType::LITERAL_FALSE:
             {
                 Token literalToken = match();
                 temp = new Expr::Literal{literalToken};
@@ -453,6 +480,12 @@ public:
 
                     temp = new Expr::Identifier(identifierToken, arrayIndexExpression);
                 }
+            } break;
+            default: 
+            {
+                std::stringstream ss;
+                ss << "Unexpected token (" << TOKEN_NAMES[nextToken] << ") at line " << yylineno;
+                throw SyntaxException(ss.str().c_str());
             } break;
         }
 

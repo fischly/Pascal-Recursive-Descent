@@ -11,7 +11,7 @@ public:
     SyntaxException(TokenType gottenToken, TokenType expectedToken, int lineNumber = -1)
     {
         std::stringstream ss;
-        ss << "Syntax error: expected token '" << TOKEN_NAMES[expectedToken] << "', but got '" << TOKEN_NAMES[gottenToken] << "' on line " << lineNumber << "!";
+        ss << "Expected token '" << TOKEN_NAMES[expectedToken] << "', but got '" << TOKEN_NAMES[gottenToken] << "' on line " << lineNumber << "!";
         message = ss.str();
     };
 

@@ -64,6 +64,8 @@ enum TokenType {
     LITERAL_INTEGER,
     LITERAL_REAL,
     LITERAL_STRING,
+    LITERAL_TRUE,
+    LITERAL_FALSE,
 
     /* Identifier */
     IDENTIFIER
@@ -73,7 +75,7 @@ enum TokenType {
 /* store the token names seperated from the enum, since C++ has no means of 
    accessing the name of enum fields */
 const char* TOKEN_NAMES[] = {
-    [0] = "NULL (should not happen!)",
+    [0] = "EOF",
 
     /* Keywords */
     [TokenType::PROGRAM] = "PROGRAM",
@@ -135,6 +137,9 @@ const char* TOKEN_NAMES[] = {
     [TokenType::LITERAL_INTEGER] = "LITERAL_INTEGER",
     [TokenType::LITERAL_REAL] = "LITERAL_REAL",
     [TokenType::LITERAL_STRING] = "LITERAL_STRING",
+
+    [TokenType::LITERAL_TRUE] = "LITERAL_TRUE",
+    [TokenType::LITERAL_FALSE] = "LITERAL_FALSE",
 
     /* Identifier */
     [TokenType::IDENTIFIER] = "IDENTIFIER"

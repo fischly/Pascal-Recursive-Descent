@@ -63,6 +63,10 @@ public:
             meth->accept(this);
             ss << "\n\n";
         }
+
+        ss << "(main\n";
+        prog->main->accept(this);
+        ss << ")";
     };
 
 
@@ -81,6 +85,7 @@ public:
             
             ss << ")";
         }
+        ss << ")";
 
         ss << " (defs";
         for (const auto& declVar : meth->declarations) {
@@ -95,7 +100,18 @@ public:
             ss << ")";
         }
 
-        ss << ")\n";
+        ss << ")";
+        
+        if (meth->returnType != NULL) {
+            ss << " (returns ";
+            if (Variable::VariableTypeSimple* simpleVar = dynamic_cast<Variable::VariableTypeSimple*>(meth->returnType)) {
+                ss << simpleVar->typeName.lexeme;
+            } else if (Variable::VariableTypeArray* arrayVar = dynamic_cast<Variable::VariableTypeArray*>(meth->returnType)) {
+                ss << arrayVar->typeName.lexeme << "[" << arrayVar->startRange.lexeme << ".." << arrayVar->stopRange.lexeme << "]";
+            }
+            ss << ")";
+        }
+        ss << "\n";
 
         meth->block->accept(this);
     };

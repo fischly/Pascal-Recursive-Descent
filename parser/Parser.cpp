@@ -8,14 +8,20 @@
 
 
 int main(int argc, char **argv) {
-
-    std::cout << "Hello world from parser" << std::endl;
-
     Parser p;
-    Program* prog = p.program();
 
-    AST2Dot ast2text;
+    Program* prog;
+    try {
+         prog = p.program();
+    } catch (SyntaxException ex) {
+        std::cout << "Syntax error: " << ex.what() << std::endl;
+        return -1;
+    }
+
+    AST2Text ast2text;
     prog->accept(&ast2text);
     
     std::cout << ast2text.getResult() << std::endl;
+
+    delete prog;
 }

@@ -14,28 +14,29 @@ public:
     class VariableType {
     public:
         virtual ~VariableType() = default;
+        VariableType(Token typeName) : typeName{typeName} {}
+
+        Token typeName;
     };
 
     class VariableTypeSimple : public VariableType {
     public:
-        VariableTypeSimple(Token typeName) : typeName{typeName} {}
-
-        Token typeName;
+        VariableTypeSimple(Token typeName) : VariableType(typeName) {}
     };
 
     class VariableTypeArray : public VariableType {
     public:
         VariableTypeArray(Token typeName, Token startRange, Token stopRange) 
-            : typeName{typeName}, startRange{startRange}, stopRange{stopRange}
+            : VariableType(typeName), startRange{startRange}, stopRange{stopRange}
         {}        
 
-        Token typeName;
         Token startRange;
         Token stopRange;
     };
 
 
     Variable(Token name, VariableType* type) : name{name}, type{type} {}
+    ~Variable() {  }
 
     Token name;
     VariableType* type;

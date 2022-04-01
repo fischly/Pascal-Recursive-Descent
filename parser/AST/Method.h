@@ -18,15 +18,31 @@ public:
     };
 
 
-    Method(Token identifier, std::vector<Variable*> arguments, std::vector<Variable*> declarations, Stmt::Block* block, Token* returnType)
+    Method(Token identifier,
+           std::vector<Variable*> arguments, 
+           std::vector<Variable*> declarations, 
+           Stmt::Block* block,
+           Variable::VariableType* returnType)
         : identifier{identifier}, arguments{arguments}, declarations{declarations}, block{block}, returnType{returnType}
     {}
+    ~Method() {
+        for (auto& arg : arguments) {
+            delete arg;
+        }
+
+        for (auto& decl : declarations) {
+            delete decl;
+        }
+
+        delete block;
+        delete returnType;
+    }
 
     Token identifier;
     std::vector<Variable*> arguments;
     std::vector<Variable*> declarations;
     Stmt::Block* block;
-    Token* returnType; // TODO: also allow array, currently only standard types are allowed
+    Variable::VariableType* returnType;
 
     void accept(Visitor* visitor) { visitor->visitMethod(this); }
 };

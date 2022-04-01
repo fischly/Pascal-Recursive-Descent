@@ -47,6 +47,8 @@ public:
             meth->accept(this);
         }
 
+        prog->main->accept(this);
+
         ss << "}\n";
     };
 
@@ -68,10 +70,16 @@ public:
             ss << ", ";
         }
         ss << ")";
-        
+
         if (meth->returnType != NULL) {
-            ss << ": " << meth->returnType->lexeme;
+            ss << ": ";
+            if (Variable::VariableTypeSimple* simpleVar = dynamic_cast<Variable::VariableTypeSimple*>(meth->returnType)) {
+                ss << simpleVar->typeName.lexeme;
+            } else if (Variable::VariableTypeArray* arrayVar = dynamic_cast<Variable::VariableTypeArray*>(meth->returnType)) {
+                ss << arrayVar->typeName.lexeme << "[" << arrayVar->startRange.lexeme << ".." << arrayVar->stopRange.lexeme << "]";
+            }
         }
+        
         ss << "\";\n";
 
         meth->block->accept(this);
