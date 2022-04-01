@@ -1,7 +1,7 @@
 
 testlexer:
 	flex -o lexer/lex.yy.c lexer/pascal.l
-	g++ -g -o pascal-parser.exe parser/Parser.cpp -lfl
+	g++ -g -o pascal-parser parser/Parser.cpp -lfl
 	cat test-code/$(file) | ./pascal-parser
 
 
