@@ -15,6 +15,19 @@ public:
         message = ss.str();
     };
 
+    SyntaxException(TokenType gottenToken, std::vector<TokenType> expectedTokens, int lineNumber = -1)
+    {
+        std::stringstream ss;
+        ss << "Expected one of the tokens ";
+
+        for (auto token : expectedTokens) {
+            ss << "'" << TOKEN_NAMES[token] << "', ";
+        }
+
+        ss << " but got '" << TOKEN_NAMES[gottenToken] << "' on line " << lineNumber << "!";
+        message = ss.str();
+    };
+
     SyntaxException(std::string message) : message{message} {}
 
     const char* what() const throw() {

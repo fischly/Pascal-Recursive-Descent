@@ -2,6 +2,7 @@
 #include <iostream>
 #include <exception>
 #include <utility>
+#include <algorithm>
 
 #include "../common/token-enum.h"
 #include "../lexer/lex.yy.c"
@@ -51,11 +52,24 @@ public:
     Token match() {
         Token consumedToken(nextToken, yytext, yylineno);
         
-        // std::cout << "updated next token from " << TOKEN_NAMES[nextToken] << " (\"" << yytext << "\") to ";
+//         std::cout << "updated next token from " << TOKEN_NAMES[nextToken] << " (\"" << yytext << "\") to ";
         nextToken = static_cast<TokenType>(yylex());
-        // std::cout << TOKEN_NAMES[nextToken] << " (\"" << yytext << "\")" << std::endl;
+//         std::cout << TOKEN_NAMES[nextToken] << " (\"" << yytext << "\")" << std::endl;
 
         return consumedToken;
+    }
+
+
+    void checkInput(NonTerminal rule) {
+        // check if next token is in rule set
+        std::vector<TokenType> firstSet = FIRSTSETS[rule];
+
+        if (std::find(firstSet.begin(), firstSet.end(), nextToken) == firstSet.end()) {
+            // display error
+            std::cout << "Error on rule " << RULE_NAMES[rule] << ":";
+            throw SyntaxException(nextToken, firstSet, yylineno);
+        }
+
     }
 
     /* =========================================================================================================================== */
@@ -63,12 +77,17 @@ public:
     /* =========================================================================================================================== */
 
     Program* start() {
+        checkInput(NonTerminal::START);
+
         match(TokenType::PROGRAM);
         Token programIdentifier = match(TokenType::IDENTIFIER);
         match(TokenType::SEMICOLON);
 
         // declarations
-        std::vector<Variable*> decls = varDecl();
+        std::vector<Variable*> decls;
+        if (nextToken == TokenType::VAR) {
+             decls = varDecl();
+        }
 
         // methods
         std::vector<Method*> meths = subProgList();
@@ -82,6 +101,8 @@ public:
     }
 
     std::vector<Method*> subProgList() {
+        checkInput(NonTerminal::SUBPROGLIST);
+
         std::vector<Method*> meths;
         while (nextToken == TokenType::FUNCTION || nextToken == TokenType::PROCEDURE) {
             meths.push_back(method());
@@ -91,18 +112,19 @@ public:
 
     /* --------------- Declarations --------------------- */
     std::vector<Variable*> varDecl() {
+        checkInput(NonTerminal::VARDEC);
+
+        match(TokenType::VAR);
+
         std::vector<Variable*> declarations;
-
-        if (nextToken == TokenType::VAR) {
-            match(TokenType::VAR);
-
-            declarations = varDecList();
-        }
+        declarations = varDecList();
 
         return declarations;
     }
 
     std::vector<Variable*> varDecList() {
+        checkInput(NonTerminal::VARDECLIST);
+
         std::vector<Variable*> declarations = identListType();
         match(TokenType::SEMICOLON);
 
@@ -119,6 +141,8 @@ public:
 
 
     std::vector<Variable*> identListType() {
+        checkInput(NonTerminal::IDENTLISTTYPE);
+
         std::vector<Token> variableNames = identList();
 
         match(TokenType::COLON);
@@ -134,6 +158,8 @@ public:
     }
 
     std::vector<Token> identList() {
+        checkInput(NonTerminal::IDENTLIST);
+
         std::vector<Token> variableNames;
         variableNames.push_back(match(TokenType::IDENTIFIER));
         while (nextToken == TokenType::COMMA) {
@@ -144,16 +170,14 @@ public:
     }
 
     Token simpleType() {
-        if (nextToken == TokenType::INTEGER || nextToken == TokenType::REAL || nextToken == TokenType::BOOLEAN) {
-            return match();
-        } else {
-            std::stringstream ss;
-            ss << "Expected standard type (integer, real or boolean), but got " << TOKEN_NAMES[nextToken] << " at line " << yylineno;
-            throw SyntaxException(ss.str().c_str());
-        }
+        checkInput(NonTerminal::SIMPLETYPE);
+
+        return match();
     }
 
     Variable::VariableType* type() {
+        checkInput(NonTerminal::TYPE);
+
         Variable::VariableType* temp;
 
         if (nextToken == TokenType::ARRAY) {
@@ -188,7 +212,7 @@ public:
     /* =========================================================================================================================== */
 
     std::vector<Variable*> parList() {
-        match(TokenType::BRACKETS_OPEN);
+        checkInput(NonTerminal::PARLIST);
 
         std::vector<Variable*> args;
         if (nextToken == TokenType::IDENTIFIER) {
@@ -201,14 +225,14 @@ public:
             }
         }
 
-        match(TokenType::BRACKETS_CLOSING);
-
         return args;
     }
 
 
 
     MethodHead* subProgHead() {
+        checkInput(NonTerminal::SUBPROGHEAD);
+
         if (nextToken != TokenType::FUNCTION && nextToken != TokenType::PROCEDURE) {
             std::stringstream ss;
             ss << "Expected method declaration (starting with either 'function' or 'procedure') but got " << TOKEN_NAMES[nextToken] << " at line " << yylineno;
@@ -218,7 +242,12 @@ public:
         Token methodKeyword = match(); // consume FUNCTION or PROCEDURE token
         Token methodIdentifier = match(TokenType::IDENTIFIER);
 
-        std::vector<Variable*> args =  parList();
+        std::vector<Variable*> args;
+        if (nextToken == TokenType::BRACKETS_OPEN) {
+            match(TokenType::BRACKETS_OPEN);
+             args = parList();
+            match(TokenType::BRACKETS_CLOSING);
+        }
 
         // return type
         Variable::VariableType* returnType = NULL;
@@ -248,10 +277,15 @@ public:
     }
 
     Method* method() {
+        // no input check, since this method does not reflect a rule
+
         MethodHead* methHead = subProgHead();
 
         // declarations
-        std::vector<Variable*> decls = varDecl();
+        std::vector<Variable*> decls;
+        if (nextToken == TokenType::VAR) {
+             decls = varDecl();
+        }
 
         // block
         match(TokenType::BEGIN_);
@@ -281,6 +315,8 @@ public:
     /* =========================================================================================================================== */
 
     Statement* statement() {
+        checkInput(NonTerminal::STATEMENT);
+
         Statement* temp;
 
         switch (nextToken) {
@@ -302,6 +338,8 @@ public:
     }
 
     std::vector<Statement*> stmtList() {
+        checkInput(NonTerminal::STMTLIST);
+
         std::vector<Statement*> statementsInBlock;
 
         if (nextToken != TokenType::END_) {
@@ -318,6 +356,8 @@ public:
     }
 
     Stmt::Block* compStmt() {
+        checkInput(NonTerminal::COMPSTMT);
+
         match(TokenType::BEGIN_);
         std::vector<Statement*> statementsInBlock = stmtList();
         match(TokenType::END_);
@@ -326,6 +366,8 @@ public:
     }
 
     Stmt::While* whileStmt() {
+        checkInput(NonTerminal::WHILESTMT);
+
         match(TokenType::WHILE);
 
         Expression* condition = expression();
@@ -336,6 +378,8 @@ public:
     }
 
     Stmt::If* ifStmt() {
+        checkInput(NonTerminal::IFSTMT);
+
         match(TokenType::IF);
 
         Expression* condition = expression();
@@ -353,6 +397,8 @@ public:
     }
 
     std::vector<Expression*> exprList() {
+        checkInput(NonTerminal::EXPRLIST);
+
         std::vector<Expression*> expressionList;
         expressionList.push_back(expression());
 
@@ -365,6 +411,8 @@ public:
     }
 
     std::vector<Expression*> params() {
+        checkInput(NonTerminal::PARAMS);
+
         match(TokenType::BRACKETS_OPEN);
         std::vector<Expression*> expressionList = exprList();
         match(TokenType::BRACKETS_CLOSING);
@@ -373,6 +421,8 @@ public:
     }
 
     Stmt::Call* procCall(Token identifierToken) {
+        checkInput(NonTerminal::PROCCALL);
+
         if (nextToken == TokenType::BRACKETS_OPEN) {
             return new Stmt::Call(identifierToken, params());
         }
@@ -381,6 +431,8 @@ public:
     }
 
     std::pair<Expression*, Expression*> index() {
+        checkInput(NonTerminal::INDEX);
+
         match(TokenType::SQUARE_OPEN);
 
         Expression* arrayIndexValue1 = expression();
@@ -400,6 +452,8 @@ public:
     // index -> [ expr
 
     Stmt::Assignment* assignStmt (Token identifierToken) {
+        checkInput(NonTerminal::ASSIGNSTMT);
+
         std::pair<Expression*, Expression*> arrayIndex;
         if (nextToken == TokenType::SQUARE_OPEN) {
            arrayIndex = index();
@@ -414,6 +468,8 @@ public:
     
 
     Statement* statement2(Token identifierToken) {
+        checkInput(NonTerminal::STATEMENT2);
+
         Statement* temp;
 
         // method call
@@ -437,18 +493,26 @@ public:
     /* =========================================================================================================================== */
 
     Token relOp() {
+        checkInput(NonTerminal::RELOP);
+
         return match();
     }
 
     Token addOp() {
+        checkInput(NonTerminal::ADDOP);
+
         return match();
     }
 
     Token mulOp() {
+        checkInput(NonTerminal::MULOP);
+
         return match();
     }
 
     Expression* expression() {
+        checkInput(NonTerminal::EXPR);
+
         Expression* temp = simpleExpression(); // left expression
 
         if (nextToken == TokenType::OP_EQUALS || nextToken == TokenType::OP_NOT_EQUALS || nextToken == TokenType::OP_LESS ||
@@ -464,6 +528,8 @@ public:
     }
 
     Expression* simpleExpression() {
+        checkInput(NonTerminal::SIMPLEEXPR);
+
         Expression* temp = term();
 
         // add operations
@@ -478,6 +544,8 @@ public:
     }
 
     Expression* term() {
+        checkInput(NonTerminal::TERM);
+
         // main factor
         Expression* temp = factor();
 
@@ -493,6 +561,8 @@ public:
     }
 
     Expression* factor() {
+        checkInput(NonTerminal::FACTOR);
+
         Expression* temp;
 
         switch (nextToken) {
@@ -553,5 +623,4 @@ public:
 
         return temp;
     }
-
 };
