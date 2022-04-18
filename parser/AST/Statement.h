@@ -35,16 +35,18 @@ namespace Stmt {
     /* different types of statements */
     class Assignment : public Statement {
     public:
-        Assignment(Token identifier, Expression* arrayIndex, Expression* value) 
-            : identifier{identifier}, arrayIndex{arrayIndex}, value{value}
+        Assignment(Token identifier, Expression* arrayIndex, Expression* arrayIndexEnd, Expression* value)
+            : identifier{identifier}, arrayIndex{arrayIndex}, arrayIndexEnd{arrayIndexEnd}, value{value}
         {}
         ~Assignment() {
             delete arrayIndex;
+            delete arrayIndexEnd;
             delete value;
         }
 
         Token identifier;
         Expression* arrayIndex;
+        Expression* arrayIndexEnd;
         Expression* value;
 
         void accept(Visitor* visitor) { visitor->visitAssignment(this); }

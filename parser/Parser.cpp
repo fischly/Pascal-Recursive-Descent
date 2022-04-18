@@ -12,7 +12,7 @@ int main(int argc, char **argv) {
 
     Program* prog;
     try {
-         prog = p.program();
+         prog = p.start();
     } catch (SyntaxException ex) {
         std::cout << "Syntax error: " << ex.what() << std::endl;
         return -1;

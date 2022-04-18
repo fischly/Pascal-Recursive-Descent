@@ -72,9 +72,9 @@ public:
 
     /* --------------- Methods ----------------- */
     void visitMethod(Method* meth) {
-        ss << "(method " << meth->identifier.lexeme << " (args";
+        ss << "(method " << meth->methodHead->identifier.lexeme << " (args";
 
-        for (const auto& argVar : meth->arguments) {
+        for (const auto& argVar : meth->methodHead->arguments) {
             ss << " (" << argVar->name.lexeme << ": ";
 
             if (Variable::VariableTypeSimple* simpleVar = dynamic_cast<Variable::VariableTypeSimple*>(argVar->type)) {
@@ -102,11 +102,11 @@ public:
 
         ss << ")";
         
-        if (meth->returnType != NULL) {
+        if (meth->methodHead->returnType != NULL) {
             ss << " (returns ";
-            if (Variable::VariableTypeSimple* simpleVar = dynamic_cast<Variable::VariableTypeSimple*>(meth->returnType)) {
+            if (Variable::VariableTypeSimple* simpleVar = dynamic_cast<Variable::VariableTypeSimple*>(meth->methodHead->returnType)) {
                 ss << simpleVar->typeName.lexeme;
-            } else if (Variable::VariableTypeArray* arrayVar = dynamic_cast<Variable::VariableTypeArray*>(meth->returnType)) {
+            } else if (Variable::VariableTypeArray* arrayVar = dynamic_cast<Variable::VariableTypeArray*>(meth->methodHead->returnType)) {
                 ss << arrayVar->typeName.lexeme << "[" << arrayVar->startRange.lexeme << ".." << arrayVar->stopRange.lexeme << "]";
             }
             ss << ")";

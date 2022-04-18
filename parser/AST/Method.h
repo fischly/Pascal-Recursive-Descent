@@ -5,6 +5,7 @@
 
 #include "Statement.h"
 #include "Variable.h"
+#include "MethodHead.h"
 
 
 class Method {
@@ -18,31 +19,22 @@ public:
     };
 
 
-    Method(Token identifier,
-           std::vector<Variable*> arguments, 
-           std::vector<Variable*> declarations, 
-           Stmt::Block* block,
-           Variable::VariableType* returnType)
-        : identifier{identifier}, arguments{arguments}, declarations{declarations}, block{block}, returnType{returnType}
+    Method(MethodHead* methodHead,
+           std::vector<Variable*> declarations,
+           Stmt::Block* block)
+        : methodHead{methodHead}, declarations{declarations}, block{block}
     {}
     ~Method() {
-        for (auto& arg : arguments) {
-            delete arg;
-        }
-
         for (auto& decl : declarations) {
             delete decl;
         }
 
         delete block;
-        delete returnType;
     }
 
-    Token identifier;
-    std::vector<Variable*> arguments;
+    MethodHead* methodHead;
     std::vector<Variable*> declarations;
     Stmt::Block* block;
-    Variable::VariableType* returnType;
 
     void accept(Visitor* visitor) { visitor->visitMethod(this); }
 };

@@ -58,9 +58,9 @@ public:
         auto methNodeName = getNodeName(meth);
 
         ss << "subgraph cluster" << getNodeName(meth) << "{\n";
-        ss << "label = \"" << meth->identifier.lexeme << "(";
+        ss << "label = \"" << meth->methodHead->identifier.lexeme << "(";
 
-        for (const auto& argVar : meth->arguments) {
+        for (const auto& argVar : meth->methodHead->arguments) {
             ss << argVar->name.lexeme << ": ";
             if (Variable::VariableTypeSimple* simpleVar = dynamic_cast<Variable::VariableTypeSimple*>(argVar->type)) {
                 ss << simpleVar->typeName.lexeme;
@@ -71,11 +71,11 @@ public:
         }
         ss << ")";
 
-        if (meth->returnType != NULL) {
+        if (meth->methodHead->returnType != NULL) {
             ss << ": ";
-            if (Variable::VariableTypeSimple* simpleVar = dynamic_cast<Variable::VariableTypeSimple*>(meth->returnType)) {
+            if (Variable::VariableTypeSimple* simpleVar = dynamic_cast<Variable::VariableTypeSimple*>(meth->methodHead->returnType)) {
                 ss << simpleVar->typeName.lexeme;
-            } else if (Variable::VariableTypeArray* arrayVar = dynamic_cast<Variable::VariableTypeArray*>(meth->returnType)) {
+            } else if (Variable::VariableTypeArray* arrayVar = dynamic_cast<Variable::VariableTypeArray*>(meth->methodHead->returnType)) {
                 ss << arrayVar->typeName.lexeme << "[" << arrayVar->startRange.lexeme << ".." << arrayVar->stopRange.lexeme << "]";
             }
         }
