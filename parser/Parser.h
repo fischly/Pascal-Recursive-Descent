@@ -16,6 +16,8 @@
 #include "AST/Visitors/AST2Text.h"
 #include "AST/Visitors/AST2Dot.h"
 
+#include "error-recovery/FirstSets.h"
+
 // extern int yylex();
 // extern int yylineno;
 // extern char* yytext;

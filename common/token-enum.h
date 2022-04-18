@@ -68,7 +68,9 @@ enum TokenType {
     LITERAL_FALSE,
 
     /* Identifier */
-    IDENTIFIER
+    IDENTIFIER,
+
+    EPSILON
 };
 
 
@@ -142,6 +144,8 @@ const char* TOKEN_NAMES[] = {
     [TokenType::LITERAL_FALSE] = "LITERAL_FALSE",
 
     /* Identifier */
-    [TokenType::IDENTIFIER] = "IDENTIFIER"
+    [TokenType::IDENTIFIER] = "IDENTIFIER",
+
+    [TokenType::EPSILON] = "NOTHING"
 
 };
