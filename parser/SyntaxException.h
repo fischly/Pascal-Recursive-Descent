@@ -34,6 +34,6 @@ public:
         return message.c_str();
     }
 
-private:
+//private:
     std::string message;
 };

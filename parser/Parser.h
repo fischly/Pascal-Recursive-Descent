@@ -60,16 +60,36 @@ public:
     }
 
 
-    void checkInput(NonTerminal rule) {
+    void checkInput(std::vector<TokenType> firstSet, std::vector<TokenType> followSet) {
         // check if next token is in rule set
-        std::vector<TokenType> firstSet = FIRSTSETS[rule];
 
         if (std::find(firstSet.begin(), firstSet.end(), nextToken) == firstSet.end()) {
             // display error
-            std::cout << "Error on rule " << RULE_NAMES[rule] << ":";
-            throw SyntaxException(nextToken, firstSet, yylineno);
+            //std::cout << "Error on rule " << RULE_NAMES[rule] << ":";
+
+            auto ex = SyntaxException(nextToken, firstSet, yylineno);
+            std::cerr << ex.message << std::endl;
+
+            // scanTo
+
+            std::vector<TokenType> syncSet;
+            syncSet.insert(syncSet.end(), firstSet.begin(), firstSet.end());
+            syncSet.insert(syncSet.end(), followSet.begin(), followSet.end());
+
+            scanTo(syncSet);
         }
 
+    }
+
+    void scanTo(std::vector<TokenType> syncSet) {
+        
+        syncSet.push_back(TokenType::EOF_);
+
+        // std::cout << "GOT TOKEN : " << TOKEN_NAMES[nextToken] << std::endl;
+
+        while (std::find(syncSet.begin(), syncSet.end(), nextToken) == syncSet.end()) {
+            match();
+        }
     }
 
     /* =========================================================================================================================== */
@@ -77,7 +97,7 @@ public:
     /* =========================================================================================================================== */
 
     Program* start() {
-        checkInput(NonTerminal::START);
+        checkInput(FIRSTSETS[NonTerminal::START], FOLLOWSETS[NonTerminal::START]);
 
         match(TokenType::PROGRAM);
         Token programIdentifier = match(TokenType::IDENTIFIER);
@@ -101,7 +121,7 @@ public:
     }
 
     std::vector<Method*> subProgList() {
-        checkInput(NonTerminal::SUBPROGLIST);
+        checkInput(FIRSTSETS[NonTerminal::SUBPROGLIST], FOLLOWSETS[NonTerminal::SUBPROGLIST]);
 
         std::vector<Method*> meths;
         while (nextToken == TokenType::FUNCTION || nextToken == TokenType::PROCEDURE) {
@@ -112,7 +132,7 @@ public:
 
     /* --------------- Declarations --------------------- */
     std::vector<Variable*> varDecl() {
-        checkInput(NonTerminal::VARDEC);
+        checkInput(FIRSTSETS[NonTerminal::VARDEC], FOLLOWSETS[NonTerminal::VARDEC]);
 
         match(TokenType::VAR);
 
@@ -123,7 +143,7 @@ public:
     }
 
     std::vector<Variable*> varDecList() {
-        checkInput(NonTerminal::VARDECLIST);
+        checkInput(FIRSTSETS[NonTerminal::VARDECLIST], FOLLOWSETS[NonTerminal::VARDECLIST]);
 
         std::vector<Variable*> declarations = identListType();
         match(TokenType::SEMICOLON);
@@ -141,7 +161,7 @@ public:
 
 
     std::vector<Variable*> identListType() {
-        checkInput(NonTerminal::IDENTLISTTYPE);
+        checkInput(FIRSTSETS[NonTerminal::IDENTLISTTYPE], FOLLOWSETS[NonTerminal::IDENTLISTTYPE]);
 
         std::vector<Token> variableNames = identList();
 
@@ -158,7 +178,7 @@ public:
     }
 
     std::vector<Token> identList() {
-        checkInput(NonTerminal::IDENTLIST);
+        checkInput(FIRSTSETS[NonTerminal::IDENTLIST], FOLLOWSETS[NonTerminal::IDENTLIST]);
 
         std::vector<Token> variableNames;
         variableNames.push_back(match(TokenType::IDENTIFIER));
@@ -170,13 +190,15 @@ public:
     }
 
     Token simpleType() {
-        checkInput(NonTerminal::SIMPLETYPE);
+        checkInput(FIRSTSETS[NonTerminal::SIMPLETYPE], FOLLOWSETS[NonTerminal::SIMPLETYPE]);
+
 
         return match();
     }
 
     Variable::VariableType* type() {
-        checkInput(NonTerminal::TYPE);
+        checkInput(FIRSTSETS[NonTerminal::TYPE], FOLLOWSETS[NonTerminal::TYPE]);
+
 
         Variable::VariableType* temp;
 
@@ -212,7 +234,8 @@ public:
     /* =========================================================================================================================== */
 
     std::vector<Variable*> parList() {
-        checkInput(NonTerminal::PARLIST);
+        checkInput(FIRSTSETS[NonTerminal::PARLIST], FOLLOWSETS[NonTerminal::PARLIST]);
+
 
         std::vector<Variable*> args;
         if (nextToken == TokenType::IDENTIFIER) {
@@ -231,7 +254,8 @@ public:
 
 
     MethodHead* subProgHead() {
-        checkInput(NonTerminal::SUBPROGHEAD);
+        checkInput(FIRSTSETS[NonTerminal::SUBPROGHEAD], FOLLOWSETS[NonTerminal::SUBPROGHEAD]);
+
 
         if (nextToken != TokenType::FUNCTION && nextToken != TokenType::PROCEDURE) {
             std::stringstream ss;
@@ -315,7 +339,7 @@ public:
     /* =========================================================================================================================== */
 
     Statement* statement() {
-        checkInput(NonTerminal::STATEMENT);
+        checkInput(FIRSTSETS[NonTerminal::STATEMENT], FOLLOWSETS[NonTerminal::STATEMENT]);
 
         Statement* temp;
 
@@ -338,7 +362,8 @@ public:
     }
 
     std::vector<Statement*> stmtList() {
-        checkInput(NonTerminal::STMTLIST);
+        checkInput(FIRSTSETS[NonTerminal::STMTLIST], FOLLOWSETS[NonTerminal::STMTLIST]);
+
 
         std::vector<Statement*> statementsInBlock;
 
@@ -356,7 +381,7 @@ public:
     }
 
     Stmt::Block* compStmt() {
-        checkInput(NonTerminal::COMPSTMT);
+        checkInput(FIRSTSETS[NonTerminal::COMPSTMT], FOLLOWSETS[NonTerminal::COMPSTMT]);
 
         match(TokenType::BEGIN_);
         std::vector<Statement*> statementsInBlock = stmtList();
@@ -366,7 +391,7 @@ public:
     }
 
     Stmt::While* whileStmt() {
-        checkInput(NonTerminal::WHILESTMT);
+        checkInput(FIRSTSETS[NonTerminal::WHILESTMT], FOLLOWSETS[NonTerminal::WHILESTMT]);
 
         match(TokenType::WHILE);
 
@@ -378,7 +403,7 @@ public:
     }
 
     Stmt::If* ifStmt() {
-        checkInput(NonTerminal::IFSTMT);
+        checkInput(FIRSTSETS[NonTerminal::IFSTMT], FOLLOWSETS[NonTerminal::IFSTMT]);
 
         match(TokenType::IF);
 
@@ -397,7 +422,8 @@ public:
     }
 
     std::vector<Expression*> exprList() {
-        checkInput(NonTerminal::EXPRLIST);
+        checkInput(FIRSTSETS[NonTerminal::EXPRLIST], FOLLOWSETS[NonTerminal::EXPRLIST]);
+
 
         std::vector<Expression*> expressionList;
         expressionList.push_back(expression());
@@ -411,7 +437,7 @@ public:
     }
 
     std::vector<Expression*> params() {
-        checkInput(NonTerminal::PARAMS);
+        checkInput(FIRSTSETS[NonTerminal::PARAMS], FOLLOWSETS[NonTerminal::PARAMS]);
 
         match(TokenType::BRACKETS_OPEN);
         std::vector<Expression*> expressionList = exprList();
@@ -421,7 +447,7 @@ public:
     }
 
     Stmt::Call* procCall(Token identifierToken) {
-        checkInput(NonTerminal::PROCCALL);
+        checkInput(FIRSTSETS[NonTerminal::PROCCALL], FOLLOWSETS[NonTerminal::PROCCALL]);
 
         if (nextToken == TokenType::BRACKETS_OPEN) {
             return new Stmt::Call(identifierToken, params());
@@ -431,7 +457,7 @@ public:
     }
 
     std::pair<Expression*, Expression*> index() {
-        checkInput(NonTerminal::INDEX);
+        checkInput(FIRSTSETS[NonTerminal::INDEX], FOLLOWSETS[NonTerminal::INDEX]);
 
         match(TokenType::SQUARE_OPEN);
 
@@ -452,7 +478,7 @@ public:
     // index -> [ expr
 
     Stmt::Assignment* assignStmt (Token identifierToken) {
-        checkInput(NonTerminal::ASSIGNSTMT);
+        checkInput(FIRSTSETS[NonTerminal::ASSIGNSTMT], FOLLOWSETS[NonTerminal::ASSIGNSTMT]);
 
         std::pair<Expression*, Expression*> arrayIndex;
         if (nextToken == TokenType::SQUARE_OPEN) {
@@ -468,7 +494,8 @@ public:
     
 
     Statement* statement2(Token identifierToken) {
-        checkInput(NonTerminal::STATEMENT2);
+        checkInput(FIRSTSETS[NonTerminal::STATEMENT2], FOLLOWSETS[NonTerminal::STATEMENT2]);
+
 
         Statement* temp;
 
@@ -493,25 +520,26 @@ public:
     /* =========================================================================================================================== */
 
     Token relOp() {
-        checkInput(NonTerminal::RELOP);
+        checkInput(FIRSTSETS[NonTerminal::RELOP], FOLLOWSETS[NonTerminal::RELOP]);
 
         return match();
     }
 
     Token addOp() {
-        checkInput(NonTerminal::ADDOP);
+        checkInput(FIRSTSETS[NonTerminal::ADDOP], FOLLOWSETS[NonTerminal::ADDOP]);
 
         return match();
     }
 
     Token mulOp() {
-        checkInput(NonTerminal::MULOP);
+        checkInput(FIRSTSETS[NonTerminal::MULOP], FOLLOWSETS[NonTerminal::MULOP]);
+
 
         return match();
     }
 
     Expression* expression() {
-        checkInput(NonTerminal::EXPR);
+        checkInput(FIRSTSETS[NonTerminal::EXPR], FOLLOWSETS[NonTerminal::EXPR]);
 
         Expression* temp = simpleExpression(); // left expression
 
@@ -528,7 +556,8 @@ public:
     }
 
     Expression* simpleExpression() {
-        checkInput(NonTerminal::SIMPLEEXPR);
+        checkInput(FIRSTSETS[NonTerminal::SIMPLEEXPR], FOLLOWSETS[NonTerminal::SIMPLEEXPR]);
+
 
         Expression* temp = term();
 
@@ -544,7 +573,8 @@ public:
     }
 
     Expression* term() {
-        checkInput(NonTerminal::TERM);
+        checkInput(FIRSTSETS[NonTerminal::TERM], FOLLOWSETS[NonTerminal::TERM]);
+
 
         // main factor
         Expression* temp = factor();
@@ -561,7 +591,7 @@ public:
     }
 
     Expression* factor() {
-        checkInput(NonTerminal::FACTOR);
+        checkInput(FIRSTSETS[NonTerminal::FACTOR], FOLLOWSETS[NonTerminal::FACTOR]);
 
         Expression* temp;
 

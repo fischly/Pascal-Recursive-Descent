@@ -4,6 +4,8 @@
 #include <string.h>
 
 enum TokenType {
+    EOF_ = 0,
+
     /* Keywords */
     PROGRAM = 1,
     FUNCTION,
