@@ -111,6 +111,39 @@ const std::vector<TokenType> FIRSTSETS[] = {
     [MULOP] = { TokenType::OP_MUL, TokenType::OP_DIV, TokenType::OP_INTEGER_DIV, TokenType::OP_AND }
 };
 
+const std::vector<TokenType> FOLLOWSETS[] = {
+    [NONE] = {},
+    [START] = {  },
+    [VARDEC] = { TokenType::FUNCTION, TokenType::PROCEDURE, TokenType::BEGIN_ },
+    [VARDECLIST] = { TokenType::FUNCTION, TokenType::PROCEDURE, TokenType::BEGIN_ },
+    [IDENTLISTTYPE] = { TokenType::SEMICOLON, TokenType::BRACKETS_CLOSING },
+    [IDENTLIST] = { TokenType::COLON },
+    [TYPE] = { TokenType::SEMICOLON, TokenType::BRACKETS_CLOSING },
+    [SIMPLETYPE] = { TokenType::SEMICOLON, TokenType::BRACKETS_CLOSING },
+    [SUBPROGLIST] = { TokenType::BEGIN_ },
+    [SUBPROGHEAD] = { TokenType::VAR, TokenType::BEGIN_ },
+    [PARLIST] = { TokenType::BRACKETS_CLOSING },
+    [COMPSTMT] = { TokenType::DOT, TokenType::SEMICOLON, TokenType::END_, TokenType::ELSE },
+    [STMTLIST] = { TokenType::END_ },
+    [STATEMENT] = { TokenType::SEMICOLON, TokenType::END_, TokenType::ELSE },
+    [STATEMENT2] = { TokenType::SEMICOLON, TokenType::END_, TokenType::ELSE },
+    [PROCCALL] = { TokenType::SEMICOLON, TokenType::END_, TokenType::ELSE },
+    [PARAMS] = { TokenType::OP_MUL, TokenType::OP_DIV, TokenType::OP_INTEGER_DIV, TokenType::OP_AND, TokenType::OP_EQUALS, TokenType::OP_ADD,  TokenType::OP_SUB, TokenType::OP_OR, TokenType::SEMICOLON, TokenType::END_, TokenType::RANGE_DOTS, TokenType::SQUARE_CLOSING, TokenType::THEN, TokenType::DO, TokenType::BRACKETS_CLOSING, TokenType::OP_LESS, TokenType::OP_LESS_EQUAL, TokenType::OP_GREATER, TokenType::OP_GREATER_EQUAL, TokenType::OP_EQUALS, TokenType::OP_NOT_EQUALS, TokenType::ELSE },
+    [ASSIGNSTMT] = { TokenType::SEMICOLON, TokenType::END_, TokenType::ELSE },
+    [INDEX] = { TokenType::OP_ASSIGNMENT, TokenType::OP_MUL, TokenType::OP_DIV, TokenType::OP_INTEGER_DIV, TokenType::OP_AND, TokenType::OP_ADD, TokenType::OP_SUB, TokenType::OP_OR, TokenType::SEMICOLON, TokenType::END_, TokenType::RANGE_DOTS, TokenType::SQUARE_CLOSING, TokenType::THEN, TokenType::DO, TokenType::BRACKETS_CLOSING, TokenType::OP_LESS, TokenType::OP_LESS_EQUAL, TokenType::OP_GREATER, TokenType::OP_GREATER_EQUAL, TokenType::OP_EQUALS, TokenType::OP_NOT_EQUALS, TokenType::ELSE  },
+    [IFSTMT] = { TokenType::SEMICOLON, TokenType::END_, TokenType::ELSE },
+    [WHILESTMT] = { TokenType::SEMICOLON, TokenType::END_, TokenType::ELSE },
+    [EXPRLIST] = { TokenType::BRACKETS_CLOSING },
+    [EXPR] = { TokenType::SEMICOLON, TokenType::END_, TokenType::RANGE_DOTS, TokenType::SQUARE_CLOSING, TokenType::THEN, TokenType::DO, TokenType::BRACKETS_CLOSING, TokenType::ELSE },
+    [SIMPLEEXPR] = { TokenType::SEMICOLON, TokenType::END_, TokenType::RANGE_DOTS, TokenType::SQUARE_CLOSING, TokenType::THEN, TokenType::DO, TokenType::BRACKETS_CLOSING, TokenType::OP_LESS, TokenType::OP_LESS_EQUAL, TokenType::OP_GREATER, TokenType::OP_GREATER_EQUAL, TokenType::OP_EQUALS, TokenType::OP_NOT_EQUALS, TokenType::ELSE },
+    [TERM] = { TokenType::OP_ADD, TokenType::OP_SUB, TokenType::OP_OR, TokenType::SEMICOLON, TokenType::END_, TokenType::RANGE_DOTS, TokenType::SQUARE_CLOSING, TokenType::THEN, TokenType::DO, TokenType::BRACKETS_CLOSING, TokenType::OP_LESS, TokenType::OP_LESS_EQUAL, TokenType::OP_GREATER, TokenType::OP_GREATER_EQUAL, TokenType::OP_EQUALS, TokenType::OP_NOT_EQUALS, TokenType::ELSE },
+
+    [FACTOR] = { TokenType::OP_MUL, TokenType::OP_DIV, TokenType::OP_INTEGER_DIV, TokenType::OP_AND, TokenType::OP_ADD, TokenType::OP_SUB, TokenType::OP_OR, TokenType::SEMICOLON, TokenType::END_, TokenType::RANGE_DOTS, TokenType::SQUARE_CLOSING, TokenType::THEN, TokenType::DO, TokenType::BRACKETS_CLOSING, TokenType::OP_LESS, TokenType::OP_LESS_EQUAL, TokenType::OP_GREATER, TokenType::OP_GREATER_EQUAL, TokenType::OP_EQUALS, TokenType::OP_NOT_EQUALS, TokenType::ELSE },
+    [RELOP] = { TokenType::LITERAL_INTEGER, TokenType::LITERAL_REAL, TokenType::LITERAL_FALSE, TokenType::LITERAL_TRUE, TokenType::IDENTIFIER, TokenType::OP_NOT, TokenType::OP_SUB, TokenType::BRACKETS_OPEN, TokenType::ELSE },
+    [ADDOP] = { TokenType::LITERAL_INTEGER, TokenType::LITERAL_REAL, TokenType::LITERAL_FALSE, TokenType::LITERAL_TRUE, TokenType::IDENTIFIER, TokenType::OP_NOT, TokenType::OP_SUB, TokenType::BRACKETS_OPEN, TokenType::ELSE },
+    [MULOP] = { TokenType::LITERAL_INTEGER, TokenType::LITERAL_REAL, TokenType::LITERAL_FALSE, TokenType::LITERAL_TRUE, TokenType::IDENTIFIER, TokenType::OP_NOT, TokenType::OP_SUB, TokenType::BRACKETS_OPEN, TokenType::ELSE }
+};
+
 
 const char* RULE_NAMES[] = {
         [NONE] = "NONE",
